@@ -8,7 +8,7 @@ import qualified Network.Socket as Net
 db :: PGDatabase
 db =
   PGDatabase
-    { pgDBAddr = Right $ Net.SockAddrInet 5432 (Net.tupleToHostAddress (127, 0, 0, 1)),
+    { pgDBAddr = Right $ Net.SockAddrInet 5431 (Net.tupleToHostAddress (127, 0, 0, 1)),
       pgDBName = "notepad",
       pgDBUser = "admin",
       pgDBPass = "admin",

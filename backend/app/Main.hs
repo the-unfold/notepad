@@ -16,9 +16,9 @@ import Control.Monad.Trans (MonadIO (liftIO))
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
 import Data.Int (Int16, Int32, Int64)
 import qualified Data.Text as T
-import Database.PostgreSQL.Typed
+import Database.PostgreSQL.Typed (pgConnect, useTPGDatabase)
 import Database.PostgreSQL.Typed.Protocol (PGConnection)
-import Database.PostgreSQL.Typed.Query
+import Database.PostgreSQL.Typed.Query ( pgQuery, pgSQL )
 import Web.Spock
   ( HasSpock (getState),
     SpockM,
@@ -48,10 +48,10 @@ main =
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (DummyAppState ref)
     runSpock 8080 (spock spockCfg app)
 
-listEvents :: IO [(Int32, T.Text)]
+listEvents :: IO [Int32]
 listEvents = do
   conn <- pgConnect db
-  pgQuery conn [pgSQL| SELECT event_id, body from events; |]
+  pgQuery conn [pgSQL| SELECT event_id from events; |]
 
 app :: SpockM () MySession MyAppState ()
 app =
@@ -62,3 +62,7 @@ app =
         (DummyAppState ref) <- getState
         visitorNumber <- liftIO $ atomicModifyIORef' ref $ \i -> (i + 1, i + 1)
         text ("Hello " <> name <> ", you are visitor number " <> T.pack (show visitorNumber))
+    get "hello/kitty" $ 
+      do 
+        evts <- liftIO listEvents
+        text $ T.pack $ unwords $ map show evts
