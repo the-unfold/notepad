@@ -14,6 +14,6 @@ db =
       pgDBPass = "admin",
       pgDBParams = [],
       pgDBDebug = False,
-      pgDBLogMessage = print,
+      pgDBLogMessage = print . PGError,
       pgDBTLS = TlsDisabled
     }

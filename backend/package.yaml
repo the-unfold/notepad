@@ -26,6 +26,7 @@ dependencies:
 - network
 - text
 - mtl
+- aeson
 
 library:
   source-dirs: src
