@@ -27,6 +27,7 @@ dependencies:
 - text
 - mtl
 - aeson
+- http-types
 
 library:
   source-dirs: src
