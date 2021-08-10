@@ -25,11 +25,12 @@ import Database.PostgreSQL.Typed.Protocol (PGConnection)
 import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL)
 import Database.PostgreSQL.Typed.Types (PGType)
 import GHC.Generics (Generic)
-import Network.HTTP.Types (status200, status500)
+import qualified Network.HTTP.Types as HttpTypes
 import Web.Spock
   ( HasSpock (getState),
     SpockM,
     get,
+    jsonBody,
     post,
     response,
     root,
@@ -51,6 +52,10 @@ useTPGDatabase db -- compile time connection
 data DomainEvent
   = UserRegistered {email :: Text}
   | TextChanged {updatedText :: Text}
+  deriving stock (Eq, Show, Read, Generic)
+  deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
+
+data RegisterUserPayload = RegisterUserPayload {email :: Text, uuid :: UUID.UUID}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
 
@@ -94,10 +99,17 @@ app = do
   get "events" $ do
     evts <- liftIO listEvents
     case evts of
-      Aeson.Error err -> setStatus status500
+      Aeson.Error err -> setStatus HttpTypes.status500
       Aeson.Success xs -> text $ T.pack $ unwords $ map show xs
   post "events" $ do
-    liftIO $ case UUID.fromText "550e8400-e29b-41d4-a726-446655440000" of
-      Just uuid -> runQuery $ insertEvent uuid (Aeson.toJSON $ UserRegistered "john@galt.com")
-      _ -> pure [()]
-    setStatus status200
+    body <- jsonBody
+    let resultOfPayload = case body of
+          Just validJson -> Aeson.fromJSON @RegisterUserPayload validJson
+          _ -> fail "Json body expected. Status 400" -- TODO: fail with 400
+    let resultOfValue = fmap (Aeson.toJSON . (email :: RegisterUserPayload -> Text)) resultOfPayload
+    let resultOfUuid = fmap (uuid :: RegisterUserPayload -> UUID.UUID) resultOfPayload
+    case (resultOfValue, resultOfUuid) of
+      (Aeson.Success value, Aeson.Success uuid) -> do
+        liftIO $ runQuery $ insertEvent uuid value
+        setStatus HttpTypes.status201
+      _ -> setStatus HttpTypes.status400
