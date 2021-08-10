@@ -40,6 +40,7 @@ library
     , network
     , postgresql-typed
     , text
+    , uuid
   default-language: Haskell2010
 
 executable haskell-spock-exe
@@ -61,6 +62,7 @@ executable haskell-spock-exe
     , network
     , postgresql-typed
     , text
+    , uuid
   default-language: Haskell2010
 
 test-suite haskell-spock-test
@@ -82,4 +84,5 @@ test-suite haskell-spock-test
     , network
     , postgresql-typed
     , text
+    , uuid
   default-language: Haskell2010

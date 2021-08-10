@@ -29,6 +29,7 @@ dependencies:
 - aeson
 - http-types
 - async
+- uuid
 
 library:
   source-dirs: src
