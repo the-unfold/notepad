@@ -11,6 +11,8 @@
 module Main where
 
 import Connect (db)
+import Control.Concurrent
+import Control.Concurrent.Async (concurrently_)
 import Control.Monad.Trans (MonadIO (liftIO))
 import qualified Data.Aeson as Aeson
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
@@ -54,12 +56,16 @@ data MySession = EmptySession
 
 newtype MyAppState = DummyAppState (IORef Int)
 
+processEvents :: IO ()
+processEvents = do
+  putStrLn "poop str ln"
+  threadDelay 1000000
+  processEvents
+
 main :: IO ()
 main =
   do
-    ref <- newIORef 0
-    spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (DummyAppState ref)
-    runSpock 8080 (spock spockCfg app)
+    concurrently_ processEvents handleRequests
 
 runQuery :: PGSimpleQuery a -> IO [a]
 runQuery q = do
@@ -71,6 +77,13 @@ runQuery q = do
 listEvents :: IO (Aeson.Result [DomainEvent])
 listEvents = do
   traverse Aeson.fromJSON <$> (runQuery [pgSQL| SELECT body from events; |] :: IO [Aeson.Value])
+
+handleRequests :: IO ()
+handleRequests =
+  do
+    ref <- newIORef 0
+    spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (DummyAppState ref)
+    runSpock 8080 (spock spockCfg app)
 
 app :: SpockM () MySession MyAppState ()
 app =

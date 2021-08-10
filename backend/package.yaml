@@ -28,6 +28,7 @@ dependencies:
 - mtl
 - aeson
 - http-types
+- async
 
 library:
   source-dirs: src
