@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS notes (
     "note_id" serial NOT NULL PRIMARY KEY,
-    "user_id" NOT NULL FOREIGN KEY REFERENCES users("user_id"),
+    "user_id" INTEGER REFERENCES users("user_id") NOT NULL ,
     "content" text NOT NULL
 );
 
