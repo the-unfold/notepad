@@ -5,6 +5,19 @@ CREATE TABLE IF NOT EXISTS events (
     "body" jsonb NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    "user_id" serial NOT NULL PRIMARY KEY,
+    "email" text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+    "note_id" serial NOT NULL PRIMARY KEY,
+    "user_id" NOT NULL FOREIGN KEY REFERENCES users("user_id"),
+    "content" text NOT NULL
+);
+
+CREATE INDEX "notes_userid_idx" ON notes ("user_id");
+
 COMMENT ON TABLE events IS 'Events';
 
 COMMENT ON COLUMN events.event_id IS 'Event id (we use it to resume event consuming)';
