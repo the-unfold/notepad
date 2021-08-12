@@ -30,6 +30,7 @@ dependencies:
 - http-types
 - async
 - uuid
+- hvect
 
 library:
   source-dirs: src

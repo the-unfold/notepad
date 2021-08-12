@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 
@@ -36,6 +36,7 @@ library
     , async
     , base >=4.7 && <5
     , http-types
+    , hvect
     , mtl
     , network
     , postgresql-typed
@@ -58,6 +59,7 @@ executable haskell-spock-exe
     , base >=4.7 && <5
     , haskell-spock
     , http-types
+    , hvect
     , mtl
     , network
     , postgresql-typed
@@ -80,6 +82,7 @@ test-suite haskell-spock-test
     , base >=4.7 && <5
     , haskell-spock
     , http-types
+    , hvect
     , mtl
     , network
     , postgresql-typed
