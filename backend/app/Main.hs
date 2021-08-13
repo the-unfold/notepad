@@ -7,6 +7,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Main where
 
@@ -33,6 +34,7 @@ import Web.Spock
     SpockM,
     RouteSpec,
     Path,
+    static,
     get,
     jsonBody,
     post,
@@ -137,8 +139,21 @@ makeEvent body eventFromPayload =
 --         _ -> undefined -- TODO:  setStatus HttpTypes.status400
 --   -- mUser <- getUserFromSession
 
+initHook :: Monad m => ActionCtxT () m (HVect '[])
+initHook = pure HNil
+
+cHook :: (MonadIO m, Aeson.FromJSON a) => ActionCtxT (HVect xs) m (HVect (Aeson.Result a ': xs))
+cHook = do
+  oldCtx <- getContext 
+  body <- jsonBody
+  case body of
+    Just pld -> pure (Aeson.fromJSON pld :&: oldCtx)
+    Nothing -> text "invalid json"
+  -- pure (res :&: oldCtx)
+
+
 app :: SpockM () MySession () ()
-app = do
+app = prehook initHook $ do
   get root $ text "Hello World!"
 
   -- List all the events
@@ -169,6 +184,7 @@ app = do
 
   post ("update-note" <//> var) $ \noteId -> do
     body <- jsonBody
+    context <- getContext
     let resultOfPayload = case body of
           Just validJson -> Aeson.fromJSON @(WithUuid NoteAddedPayload) validJson
           _ -> fail "Json body expected. Status 400"
@@ -180,8 +196,19 @@ app = do
         setStatus HttpTypes.status201
       _ -> setStatus HttpTypes.status400
       
-  -- prehook (return (42 :: Int)) $ post "malone" $ do
-  --   x <- getContext
-  --   text "I've been fuckin' hoes and poppin' pillies \
-  --        \Man, I feel just like a rockstar"
+  prehook cHook $ post (static "malone") $ do
+    x <- getContext
+    -- let event = case x of
+    --               Aeson.Success pld -> registerUserFromPayload pld
+    --               Aeson.Error err -> fail "fuck"
+    -- let eventResult = registerUserFromPayload <$> x
+
+    -- text "I've been fuckin' hoes and poppin' pillies \
+    --      \Man, I feel just like a rockstar"
+
+    case x of 
+      Aeson.Success (WithUuid (RegisterUserPayload pld) uuid) -> do
+        liftIO $ insertEvent uuid (registerUserFromPayload pld)
+        setStatus HttpTypes.status201
+      _ -> setStatus HttpTypes.status400
       
