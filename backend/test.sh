@@ -7,7 +7,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/create-note \
+  --url http://localhost:8080/notes/create \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "content": "I am a simple note" },

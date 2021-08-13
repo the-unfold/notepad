@@ -16,6 +16,7 @@ import Control.Concurrent
 import Control.Concurrent.Async (concurrently_)
 import Control.Monad.Trans (MonadIO (liftIO))
 import qualified Data.Aeson as Aeson
+import Data.HVect
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
 import Data.Int (Int16, Int32, Int64)
 import Data.Text (Text)
@@ -26,26 +27,29 @@ import Database.PostgreSQL.Typed.Protocol (PGConnection)
 import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL)
 import Database.PostgreSQL.Typed.Types (PGType)
 import GHC.Generics (Generic)
-import Data.HVect
 import GHC.Records
 import qualified Network.HTTP.Types as HttpTypes
 import Web.Spock
-  ( HasSpock (getState),
-    SpockM,
-    RouteSpec,
+  ( ActionCtxT,
+    HasSpock (getState),
     Path,
-    static,
+    RouteSpec,
+    SpockM,
+    WebStateT,
     get,
+    getContext,
     jsonBody,
     post,
+    prehook,
     response,
     root,
     runSpock,
     setStatus,
     spock,
+    static,
     text,
     var,
-    (<//>), getContext, prehook, ActionCtxT
+    (<//>),
   )
 import Web.Spock.Config
   ( PoolOrConn (PCNoDatabase),
@@ -84,7 +88,6 @@ noteAddedFromPayload userId = NoteAdded userId . (content :: NoteAddedPayload ->
 
 data MySession = EmptySession
 
-
 processEvents :: IO ()
 processEvents = do
   putStrLn "poop str ln"
@@ -106,7 +109,7 @@ runQuery q = do
 listEvents :: IO (Aeson.Result [DomainEvent])
 listEvents = do
   traverse Aeson.fromJSON <$> (runQuery [pgSQL| SELECT body from events; |] :: IO [Aeson.Value])
-  
+
 insertEvent :: UUID.UUID -> DomainEvent -> IO [()]
 insertEvent uuid body = runQuery [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
 
@@ -117,40 +120,21 @@ handleRequests =
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase ()
     runSpock 8080 (spock spockCfg app)
 
-
 makeEvent :: Aeson.FromJSON a => Maybe Aeson.Value -> (a -> b) -> Aeson.Result (UUID.UUID, b)
-makeEvent body eventFromPayload = 
+makeEvent body eventFromPayload =
   let resultOfPayload = case body of
         Just validJson -> Aeson.fromJSON validJson
-        _ -> fail "Json body expected. Status 400" -- TODO: fail with 400
-  in 
-    (\x -> (uuid x, eventFromPayload (payload x))) <$> resultOfPayload
-
--- huyFn :: (Path ('[]) Open) -> Int
--- huyFn p = 1
-
--- customHook :: ActionCtxT (HVect xs) (m) (HVect (Int '(:) xs))
--- customHook = do
---   oldCtx <- getContext
---   sess <- readSession
---   body <- jsonBody
---   case body of
---         Just validJson -> pure $ (42 :&: oldCtx)--Aeson.fromJSON @a validJson
---         _ -> undefined -- TODO:  setStatus HttpTypes.status400
---   -- mUser <- getUserFromSession
+        _ -> Aeson.Error "Json body expected."
+   in (\x -> (uuid x, eventFromPayload (payload x))) <$> resultOfPayload
 
 initHook :: Monad m => ActionCtxT () m (HVect '[])
 initHook = pure HNil
 
-cHook :: (MonadIO m, Aeson.FromJSON a) => ActionCtxT (HVect xs) m (HVect (Aeson.Result a ': xs))
-cHook = do
-  oldCtx <- getContext 
+decodeBody :: (MonadIO m, Aeson.FromJSON a) => (a -> b) -> ActionCtxT (HVect xs) m (HVect (Aeson.Result (UUID.UUID, b) ': xs))
+decodeBody eventFromPayload = do
+  oldCtx <- getContext
   body <- jsonBody
-  case body of
-    Just pld -> pure (Aeson.fromJSON pld :&: oldCtx)
-    Nothing -> text "invalid json"
-  -- pure (res :&: oldCtx)
-
+  pure (makeEvent body eventFromPayload :&: oldCtx)
 
 app :: SpockM () MySession () ()
 app = prehook initHook $ do
@@ -163,26 +147,25 @@ app = prehook initHook $ do
       Aeson.Error err -> setStatus HttpTypes.status500
       Aeson.Success xs -> text $ T.pack $ unwords $ map show xs
 
-  -- Register user
-  post "users" $ do
-    body <- jsonBody
-    let evtResult = makeEvent body registerUserFromPayload
-    case evtResult of
-      Aeson.Success (uuid, domainEvent) -> do
-        liftIO $ insertEvent uuid domainEvent
-        setStatus HttpTypes.status201
-      _ -> setStatus HttpTypes.status400
+  prehook (decodeBody registerUserFromPayload) $
+    post "users" $ do
+      contextVect <- getContext
+      case Data.HVect.head contextVect of
+        Aeson.Success (uuid, event) -> do
+          liftIO $ insertEvent uuid event
+          setStatus HttpTypes.status201
+        _ -> setStatus HttpTypes.status400
 
-  post "create-note" $ do
-    body <- jsonBody
-    let evtResult = makeEvent body (noteAddedFromPayload 1)
-    case evtResult of 
-      Aeson.Success  (uuid, domainEvent) -> do
-        liftIO $ insertEvent uuid domainEvent
-        setStatus HttpTypes.status201
-      _ -> setStatus HttpTypes.status400
+  prehook (decodeBody (noteAddedFromPayload 1)) $
+    post ("notes" <//> "create") $ do
+      contextVect <- getContext
+      case Data.HVect.head contextVect of
+        Aeson.Success (uuid, event) -> do
+          liftIO $ insertEvent uuid event
+          setStatus HttpTypes.status201
+        _ -> setStatus HttpTypes.status400
 
-  post ("update-note" <//> var) $ \noteId -> do
+  post ("notes" <//> "update" <//> var) $ \noteId -> do
     body <- jsonBody
     context <- getContext
     let resultOfPayload = case body of
@@ -195,20 +178,3 @@ app = prehook initHook $ do
         liftIO $ insertEvent uuid (NoteUpdated 1 noteId content)
         setStatus HttpTypes.status201
       _ -> setStatus HttpTypes.status400
-      
-  prehook cHook $ post (static "malone") $ do
-    x <- getContext
-    -- let event = case x of
-    --               Aeson.Success pld -> registerUserFromPayload pld
-    --               Aeson.Error err -> fail "fuck"
-    -- let eventResult = registerUserFromPayload <$> x
-
-    -- text "I've been fuckin' hoes and poppin' pillies \
-    --      \Man, I feel just like a rockstar"
-
-    case x of 
-      Aeson.Success (WithUuid (RegisterUserPayload pld) uuid) -> do
-        liftIO $ insertEvent uuid (registerUserFromPayload pld)
-        setStatus HttpTypes.status201
-      _ -> setStatus HttpTypes.status400
-      
