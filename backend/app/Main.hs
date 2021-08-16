@@ -90,7 +90,36 @@ data MySession = EmptySession
 
 processEvents :: IO ()
 processEvents = do
-  putStrLn "poop str ln"
+  -- process event according to its type (tag)
+  -- save processing result (if any) to another table
+  -- lastProcessedEventId
+  -- let q = runQuery [pgSQL| SELECT event_id from last_processed_event LIMIT 1 |]
+
+  -- Todo: 
+  newEvents <- runQuery [pgSQL| 
+    SELECT event_id, uuid, body, is_first
+    FROM (
+        SELECT e.event_id, uuid, body, FALSE as is_first
+        FROM events e, last_processed_event
+        WHERE e.event_id = last_processed_event.event_id + 1
+      UNION
+        SELECT e.event_id, uuid, body, TRUE as is_first
+        FROM events e
+        WHERE event_id = 1) RESULTS
+    ORDER BY event_id DESC
+    LIMIT 1;
+    |] :: IO [(Maybe Int32, Maybe UUID.UUID, Maybe Aeson.Value, Maybe Bool)]
+
+  case newEvents of
+    [(Just eventId, Just uuid, Just body, Just isFirst)] -> do
+      putStrLn $ "processing event number " ++ show eventId 
+      print (eventId, uuid, isFirst)
+      if isFirst
+        then runQuery [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |] 
+        else runQuery [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |] 
+      pure ()
+    _ -> putStrLn "waiting for events..."
+
   threadDelay 1000000
   processEvents
 

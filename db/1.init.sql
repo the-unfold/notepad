@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS notes (
     "content" text NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS last_processed_event (
+    "event_id" INTEGER REFERENCES events("event_id") NOT NULL
+);
+
 CREATE INDEX "notes_userid_idx" ON notes ("user_id");
 
 COMMENT ON TABLE events IS 'Events';
