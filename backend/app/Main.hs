@@ -101,11 +101,11 @@ processEvents = do
     FROM (
         SELECT e.event_id, uuid, body, FALSE as is_first
         FROM events e, last_processed_event
-        WHERE e.event_id = last_processed_event.event_id + 1
+        WHERE e.event_id = last_processed_event.event_id + 1 AND EXISTS (SELECT 1 FROM last_processed_event )
       UNION
         SELECT e.event_id, uuid, body, TRUE as is_first
         FROM events e
-        WHERE event_id = 1) RESULTS
+        WHERE event_id = 1 AND NOT EXISTS (SELECT 1 FROM last_processed_event )) RESULTS
     ORDER BY event_id DESC
     LIMIT 1;
     |] :: IO [(Maybe Int32, Maybe UUID.UUID, Maybe Aeson.Value, Maybe Bool)]
