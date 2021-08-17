@@ -35,6 +35,8 @@ library
     , aeson
     , async
     , base >=4.7 && <5
+    , bytestring
+    , containers
     , http-types
     , hvect
     , mtl
@@ -57,6 +59,8 @@ executable haskell-spock-exe
     , aeson
     , async
     , base >=4.7 && <5
+    , bytestring
+    , containers
     , haskell-spock
     , http-types
     , hvect
@@ -80,6 +84,8 @@ test-suite haskell-spock-test
     , aeson
     , async
     , base >=4.7 && <5
+    , bytestring
+    , containers
     , haskell-spock
     , http-types
     , hvect

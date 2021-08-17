@@ -1,13 +1,15 @@
 CREATE TABLE IF NOT EXISTS events (
     "event_id" serial NOT NULL PRIMARY KEY,
     "ts" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "uuid" uuid NOT NULL UNIQUE,
-    "body" jsonb NOT NULL
+    "uuid" uuid NOT NULL,
+    "body" jsonb NOT NULL,
+    CONSTRAINT unique_event_uuid UNIQUE ("uuid")
 );
 
 CREATE TABLE IF NOT EXISTS users (
     "user_id" serial NOT NULL PRIMARY KEY,
-    "email" text NOT NULL
+    "email" text NOT NULL,
+    CONSTRAINT unique_user_email UNIQUE ("email") 
 );
 
 CREATE TABLE IF NOT EXISTS notes (
