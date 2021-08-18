@@ -1,8 +1,6 @@
 ## Plan:
 ### Step 2: process events in background
 
-- sql table for notepad entries - notes: serial unique note_id, user_id foreign key, note_content, index по user_id
-- добавить и обрабатывать событие добавления note
 - ping метнись кабанчиком
 - фронт всегда поллит сам, если вообще заинтересован в результатах обработки. Возможно сочетание советов и поллинга.
 

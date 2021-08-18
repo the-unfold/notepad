@@ -15,8 +15,9 @@ module Main where
 import Connect (db)
 import Control.Concurrent
 import Control.Concurrent.Async (concurrently_)
-import Control.Exception (throw, try)
-import Control.Monad.Except
+import Control.Exception (try)
+import Control.Monad (when)
+import Control.Monad.Except (liftEither, ExceptT(..), runExceptT, withExceptT, throwError)
 import Control.Monad.Trans (MonadIO (liftIO))
 import qualified Data.Aeson as Aeson
 import qualified Data.ByteString.Char8 as BSC
@@ -28,11 +29,12 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.UUID as UUID
 import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields, useTPGDatabase)
-import Database.PostgreSQL.Typed.Protocol (PGConnection)
-import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL)
+import Database.PostgreSQL.Typed.Protocol (PGConnection, pgBegin, pgCommit, pgRollback)
+import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL, pgExecute)
 import Database.PostgreSQL.Typed.Types (PGType)
 import GHC.Generics (Generic)
 import GHC.Records
+import Fmt
 import qualified Network.HTTP.Types as HttpTypes
 import Web.Spock
   ( ActionCtxT,
@@ -115,14 +117,19 @@ processEvent UserRegistered {email} = do
         | includesText "unique_user_email" e = InvalidOperation "User with such email already exists."
         | otherwise = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQuery_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
+    runQueryNoTransaction_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
 
 processEvent NoteAdded {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
-  withExceptT transformError . ExceptT . try $
-    runQuery_ [pgSQL| INSERT INTO notes (user_id, content) VALUES (${userId}, ${content}); |]
+      maxNotesPerUser = 2
+  [Just notesCount] <- withExceptT transformError . ExceptT . try $ do
+    runQueryNoTransaction [pgSQL| SELECT count(note_id) FROM notes WHERE user_id = ${userId}; |] :: IO [Maybe Int64]
+  liftIO $ fmtLn $ "notesCount: " +| notesCount |+ ""
+  if notesCount < maxNotesPerUser
+    then withExceptT transformError . ExceptT . try $ runQueryNoTransaction_ [pgSQL| INSERT INTO notes (user_id, content) VALUES (${userId}, ${content}); |]
+    else throwError . InvalidOperation . fmt $ "Notes limit of " +|maxNotesPerUser|+ " exceeded. Consider upgrading to the Platinum Pro Plus plan to submit up to 4 notes."
 
 processEvent NoteRemoved { userId, noteId } = do
   -- Причины облома: пользователь удаляет не своё 
@@ -132,7 +139,7 @@ processEvent NoteRemoved { userId, noteId } = do
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQuery_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
+    runQueryNoTransaction_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
 processEvent NoteUpdated { userId, noteId, content } = do
   -- Причины облома: пользователь редактирует не своё 
@@ -142,12 +149,30 @@ processEvent NoteUpdated { userId, noteId, content } = do
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQuery_ [pgSQL| UPDATE notes SET content = ${content} WHERE user_id = ${userId} AND note_id = ${noteId}; |]
+    runQueryNoTransaction_ [pgSQL| UPDATE notes SET content = ${content} WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
-processEvents :: IO ()
-processEvents = do
+preProcessEvent :: Int32 -> UUID.UUID -> Aeson.Value -> Bool -> ExceptT ProcessingError IO ()
+preProcessEvent eventId uuid body isFirst = do
+  case Aeson.fromJSON body of
+    -- Event body was fine
+    Aeson.Success evt -> do
+      -- Attempt to process event
+      res <- liftIO . runExceptT $ processEvent evt
+      liftIO $ print res
+      -- Open a brand new DB connection for transaction, so that we mark a failed event as processed anyways
+      let markAsProcessed = 
+              if isFirst 
+                then [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |] 
+                else [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |]
+      liftIO $ runQueryNoTransaction_ markAsProcessed
+
+    -- Event body was unexpected
+    Aeson.Error _ -> pure ()
+
+processEventsInLoop :: IO ()
+processEventsInLoop = do
   newEvents <-
-    runQuery
+    runQueryNoTransaction
       [pgSQL| 
     SELECT event_id, uuid, body, is_first
     FROM (
@@ -165,50 +190,46 @@ processEvents = do
 
   case newEvents of
     [(Just eventId, Just uuid, Just body, Just isFirst)] -> do
-      putStrLn $ "processing event number " ++ show eventId
-      print (eventId, uuid, isFirst)
-      -- start transaction
-      let event = Aeson.fromJSON body
-      case event of
-        Aeson.Success evt -> do
-          liftIO . runExceptT $ processEvent evt
-          pure ()
-        _ -> pure ()
-
-      if isFirst
-        then runQuery_ [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |]
-        else runQuery_ [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |]
-    -- end transaction
-    _ -> putStrLn "waiting for events..."
-
-  threadDelay 1000000
-  processEvents
+      putStrLn $ "processing event " ++ show (eventId, uuid, isFirst)
+      runExceptT $ preProcessEvent eventId uuid body isFirst
+      pure ()
+    _ -> do 
+      putStrLn "waiting for events..."
+      -- Step 1: wait for ping -- IOShit
+      -- Step 2: race [wait for ping, delay 1 second]
+      threadDelay 1000000
+  processEventsInLoop
 
 main :: IO ()
 main =
   do
-    concurrently_ processEvents handleRequests
+    concurrently_ processEventsInLoop handleRequests
 
-runQuery :: PGSimpleQuery a -> IO [a]
-runQuery q = do
+runQueryNoTransaction :: PGSimpleQuery a -> IO [a]
+runQueryNoTransaction q = do
   conn <- pgConnect db
   res <- pgQuery conn q
   pgDisconnect conn
   pure res
 
-runQuery_ :: PGSimpleQuery a -> IO ()
-runQuery_ q = do
+runQueryNoTransaction_ :: PGSimpleQuery a -> IO ()
+runQueryNoTransaction_ q = do
   conn <- pgConnect db
   pgQuery conn q
   pgDisconnect conn
   pure ()
 
+pgQuery_ :: PGConnection -> PGSimpleQuery a -> IO ()
+pgQuery_ conn q = do
+  pgQuery conn q
+  pure ()
+
 listEvents :: IO (Aeson.Result [DomainEvent])
 listEvents = do
-  traverse Aeson.fromJSON <$> (runQuery [pgSQL| SELECT body from events; |] :: IO [Aeson.Value])
+  traverse Aeson.fromJSON <$> (runQueryNoTransaction [pgSQL| SELECT body from events; |] :: IO [Aeson.Value])
 
 insertEvent :: UUID.UUID -> DomainEvent -> IO ()
-insertEvent uuid body = runQuery_ [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
+insertEvent uuid body = runQueryNoTransaction_ [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
 
 handleRequests :: IO ()
 handleRequests =

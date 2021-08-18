@@ -33,6 +33,7 @@ dependencies:
 - async
 - uuid
 - hvect
+- fmt
 
 library:
   source-dirs: src

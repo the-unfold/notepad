@@ -37,6 +37,7 @@ library
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fmt
     , http-types
     , hvect
     , mtl
@@ -61,6 +62,7 @@ executable haskell-spock-exe
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fmt
     , haskell-spock
     , http-types
     , hvect
@@ -86,6 +88,7 @@ test-suite haskell-spock-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , fmt
     , haskell-spock
     , http-types
     , hvect
