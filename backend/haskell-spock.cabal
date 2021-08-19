@@ -25,7 +25,11 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Database
+      DomainEvent
+      EventProcessor
+      EventRegistrator
+      HttpServer
   other-modules:
       Paths_haskell_spock
   hs-source-dirs:
@@ -50,7 +54,6 @@ library
 executable haskell-spock-exe
   main-is: Main.hs
   other-modules:
-      Connect
       Paths_haskell_spock
   hs-source-dirs:
       app
