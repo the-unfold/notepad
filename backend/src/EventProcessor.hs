@@ -20,6 +20,8 @@ import Control.Monad.Trans (MonadIO (liftIO))
 import Control.Monad.Except (liftEither, ExceptT(..), runExceptT, withExceptT, throwError)
 import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields, useTPGDatabase)
 import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL, pgExecute)
+import Control.Concurrent.STM.TBChan ( readTBChan, TBChan )
+import Control.Concurrent.STM ( atomically )
 import Fmt
 import Control.Concurrent ( threadDelay )
 
@@ -96,8 +98,8 @@ preProcessEvent eventId uuid body isFirst = do
     -- Event body was unexpected
     Aeson.Error _ -> pure ()
 
-processEventsInLoop :: IO ()
-processEventsInLoop = do
+processEventsInLoop :: TBChan () ->  IO ()
+processEventsInLoop chan = do
   newEvents <-
     runQueryNoTransaction
       [pgSQL| 
@@ -121,8 +123,7 @@ processEventsInLoop = do
       runExceptT $ preProcessEvent eventId uuid body isFirst
       pure ()
     _ -> do 
-      putStrLn "waiting for events..."
-      -- Step 1: wait for ping -- IOShit
-      -- Step 2: race [wait for ping, delay 1 second]
-      threadDelay 1000000
-  processEventsInLoop
+      putStrLn "Waiting for a signal to process new events..."
+      atomically $ readTBChan chan 
+      putStrLn "Got a signal, processing!"
+  processEventsInLoop chan

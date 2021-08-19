@@ -47,6 +47,7 @@ import Data.Int (Int16, Int32, Int64)
 import Data.HVect
 import Control.Monad.Trans (MonadIO (liftIO))
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
+import Control.Concurrent.STM.TBChan ( TBChan )
 
 import qualified DomainEvent
 import DomainEvent (DomainEvent)
@@ -72,13 +73,49 @@ registerUserFromPayload = DomainEvent.UserRegistered . (email :: RegisterUserPay
 noteAddedFromPayload :: Int32 -> NoteAddedPayload -> DomainEvent
 noteAddedFromPayload userId = DomainEvent.NoteAdded userId . (content :: NoteAddedPayload -> Text)
 
-handleRequests :: IO ()
-handleRequests =
+handleRequests :: TBChan () -> IO ()
+handleRequests chan =
   do
     ref <- newIORef 0
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase ()
-    runSpock 8080 (spock spockCfg app)
+    runSpock 8080 (spock spockCfg $ app chan)
 
+
+app :: TBChan () -> SpockM () MySession () ()
+app chan = prehook initHook $ do
+  get root $ text "Hello World!"
+
+  prehook (decodeBody registerUserFromPayload) $
+    post "users" $ do
+      contextVect <- getContext
+      case Data.HVect.head contextVect of
+        Aeson.Success (uuid, event) -> do
+          liftIO $ insertEvent chan uuid event
+          setStatus HttpTypes.status201
+        _ -> setStatus HttpTypes.status400
+
+  prehook (decodeBody (noteAddedFromPayload 1)) $
+    post ("notes" <//> "create") $ do
+      contextVect <- getContext
+      case Data.HVect.head contextVect of
+        Aeson.Success (uuid, event) -> do
+          liftIO $ insertEvent chan uuid event
+          setStatus HttpTypes.status201
+        _ -> setStatus HttpTypes.status400
+
+  post ("notes" <//> "update" <//> var) $ \noteId -> do
+    body <- jsonBody
+    context <- getContext
+    let resultOfPayload = case body of
+          Just validJson -> Aeson.fromJSON @(WithUuid NoteAddedPayload) validJson
+          _ -> fail "Json body expected. Status 400"
+    let resultOfContent = (\x -> content (payload x :: NoteAddedPayload)) <$> resultOfPayload
+    let resultOfUuid = uuid <$> resultOfPayload
+    case (resultOfContent, resultOfUuid) of
+      (Aeson.Success content, Aeson.Success uuid) -> do
+        liftIO $ insertEvent chan uuid (DomainEvent.NoteUpdated 1 noteId content)
+        setStatus HttpTypes.status201
+      _ -> setStatus HttpTypes.status400
 
 makeEvent :: Aeson.FromJSON a => Maybe Aeson.Value -> (a -> b) -> Aeson.Result (UUID.UUID, b)
 makeEvent body eventFromPayload =
@@ -96,39 +133,3 @@ decodeBody eventFromPayload = do
   oldCtx <- getContext
   body <- jsonBody
   pure (makeEvent body eventFromPayload :&: oldCtx)
-
-app :: SpockM () MySession () ()
-app = prehook initHook $ do
-  get root $ text "Hello World!"
-
-  prehook (decodeBody registerUserFromPayload) $
-    post "users" $ do
-      contextVect <- getContext
-      case Data.HVect.head contextVect of
-        Aeson.Success (uuid, event) -> do
-          liftIO $ insertEvent uuid event
-          setStatus HttpTypes.status201
-        _ -> setStatus HttpTypes.status400
-
-  prehook (decodeBody (noteAddedFromPayload 1)) $
-    post ("notes" <//> "create") $ do
-      contextVect <- getContext
-      case Data.HVect.head contextVect of
-        Aeson.Success (uuid, event) -> do
-          liftIO $ insertEvent uuid event
-          setStatus HttpTypes.status201
-        _ -> setStatus HttpTypes.status400
-
-  post ("notes" <//> "update" <//> var) $ \noteId -> do
-    body <- jsonBody
-    context <- getContext
-    let resultOfPayload = case body of
-          Just validJson -> Aeson.fromJSON @(WithUuid NoteAddedPayload) validJson
-          _ -> fail "Json body expected. Status 400"
-    let resultOfContent = (\x -> content (payload x :: NoteAddedPayload)) <$> resultOfPayload
-    let resultOfUuid = uuid <$> resultOfPayload
-    case (resultOfContent, resultOfUuid) of
-      (Aeson.Success content, Aeson.Success uuid) -> do
-        liftIO $ insertEvent uuid (DomainEvent.NoteUpdated 1 noteId content)
-        setStatus HttpTypes.status201
-      _ -> setStatus HttpTypes.status400
