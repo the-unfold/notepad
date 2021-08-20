@@ -11,4 +11,4 @@ jobs:
 
       - name: Build application (also run linter and unit tests) in Docker
         run: |
-          docker-compose -f dc.prod.yml build
+          docker-compose -f docker-compose.prod.yml build
