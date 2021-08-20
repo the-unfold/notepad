@@ -1,4 +1,5 @@
 version: "3.7"
+# This compose file is for dev environment
 
 # This file is useful for running db in dev mode and running db in compile time
 services:
@@ -18,3 +19,13 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: notepad
     command: ["postgres", "-c", "log_statement=all"]
+
+  # frontend:
+  #   build:
+  #     context: frontend
+  #     dockerfile: Dockerfile.dev
+  #   volumes:
+  #     - './frontend:/app'
+  #     - /app/node_modules/
+  #   ports:
+  #     - '8080:8080'

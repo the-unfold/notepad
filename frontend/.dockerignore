@@ -1,0 +1,17 @@
+# Ignore everything
+**
+
+# Allow files and directories
+!/index.src.html
+!/elm.json
+!/package.json
+!/package-lock.json
+!/src/**
+!/review/src/**/*.elm
+!/review/elm.json
+!/assets/**
+!/configs/**
+
+# Ignore unnecessary files inside allowed directories
+**/.DS_Store
+**/Thumbs.db

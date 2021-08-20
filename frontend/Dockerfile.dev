@@ -1,0 +1,17 @@
+FROM node:16.6.2 as builder
+
+# Install Elm
+RUN curl -L -o elm.gz https://github.com/elm/compiler/releases/download/0.19.1/binary-for-linux-64-bit.gz
+RUN gunzip elm.gz
+RUN chmod +x elm
+RUN mv elm /usr/local/bin/
+
+WORKDIR /app
+
+# Install NPM dependencies
+COPY package.json package-lock.json ./
+RUN npm i
+
+EXPOSE 8080
+
+CMD ["npm", "start"]

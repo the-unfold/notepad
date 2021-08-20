@@ -1,0 +1,22 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "start": "elm-live src/Main.elm --dir=./ --open --host=0.0.0.0 --port=8080 --pushstate --start-page=index.src.html -- --output=./assets/inline/bundle.js",
+    "start-debug": "npm start -- --debug",
+    "test-watch": "elm-test \"src/**/*Test.elm\" --watch",
+    "test": "elm-test \"src/**/*Test.elm\"",
+    "review": "elm-review",
+    "review-fix-interactive": "elm-review --fix",
+    "review-fix-all": "yes | elm-review --fix-all"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "elm-live": "^4.0.2",
+    "elm-review": "^2.5.5",
+    "elm-test": "^0.19.1-revision7"
+  }
+}

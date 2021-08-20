@@ -1,0 +1,14 @@
+name: main_workflow
+on:
+  push
+
+jobs:
+  main-job:
+    name: Main job
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build application (also run linter and unit tests) in Docker
+        run: |
+          docker-compose -f dc.prod.yml build
