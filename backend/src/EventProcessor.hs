@@ -10,7 +10,6 @@ module EventProcessor where
 import qualified Data.Aeson as Aeson
 import GHC.Generics (Generic)
 import Data.Text (Text)
-import qualified Data.Text as T
 import qualified Data.UUID as UUID
 import Data.Int (Int32, Int64)
 import Control.Exception (try)
@@ -21,7 +20,6 @@ import Database.PostgreSQL.Typed.Query (pgSQL)
 import Control.Concurrent.STM.TBChan ( readTBChan, TBChan )
 import Control.Concurrent.STM ( atomically )
 import Fmt
-import Control.Concurrent ( threadDelay )
 
 import DomainEvent
 import Database

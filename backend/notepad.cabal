@@ -80,7 +80,6 @@ common deps
     -- Temporarily disabled warnings which need to be fixed eventually
     -Wno-missing-import-lists
     -Wno-missing-export-lists
-    -Wno-unused-imports
     -Wno-prepositive-qualified-module
     -Wno-partial-fields
     -Wno-unused-do-bind

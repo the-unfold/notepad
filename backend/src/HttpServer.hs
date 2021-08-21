@@ -8,22 +8,16 @@ module HttpServer where
 
 import Web.Spock
   ( ActionCtxT,
-    HasSpock (getState),
-    Path,
-    RouteSpec,
     SpockM,
-    WebStateT,
     get,
     getContext,
     jsonBody,
     post,
     prehook,
-    response,
     root,
     runSpock,
     setStatus,
     spock,
-    static,
     text,
     var,
     (<//>),
@@ -34,7 +28,6 @@ import Web.Spock.Config
     defaultSpockCfg,
   )
 import qualified Network.HTTP.Types as HttpTypes
-import Web.Spock.SessionActions (readSession)
 import qualified Data.Aeson as Aeson
 import qualified Data.UUID as UUID
 import GHC.Generics (Generic)
@@ -42,7 +35,7 @@ import Data.Text (Text)
 import Data.Int (Int32)
 import Data.HVect
 import Control.Monad.Trans (MonadIO (liftIO))
-import Data.IORef (IORef, atomicModifyIORef', newIORef)
+import Data.IORef (newIORef)
 import Control.Concurrent.STM.TBChan ( TBChan )
 
 import qualified DomainEvent

@@ -1,13 +1,10 @@
 module Database where
 
-import Database.PostgreSQL.Typed.Protocol
 import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields)
 import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery)
 import Database.PostgreSQL.Typed.TH (getTPGDatabase)
-import qualified Network.Socket as Net
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Lazy as Map
-import System.Environment (getEnv)
 import Control.Monad (void)
 
 {-|

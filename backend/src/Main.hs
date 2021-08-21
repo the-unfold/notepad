@@ -1,10 +1,9 @@
 
 import Control.Concurrent ( newMVar )
-import Control.Concurrent.STM.TBChan ( newTBChan, TBChan )
+import Control.Concurrent.STM.TBChan ( newTBChan )
 import Control.Concurrent.STM ( atomically)
 
 import ConcurrencyHelpers
-import DomainEvent
 import EventProcessor
 import HttpServer ( handleRequests )
 

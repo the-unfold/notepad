@@ -7,7 +7,7 @@ module DomainEvent where
 import qualified Data.Aeson as Aeson
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Data.Int (Int16, Int32, Int64)
+import Data.Int (Int32)
 
 -- | List of all our domain events in a single event log
 data DomainEvent
