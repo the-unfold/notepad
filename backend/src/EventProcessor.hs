@@ -1,9 +1,7 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
 
@@ -50,6 +48,7 @@ processEvent NoteAdded {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
+      maxNotesPerUser :: Int64
       maxNotesPerUser = 2
   [Just notesCount] <- withExceptT transformError . ExceptT . try $ do
     runQueryWithNewConnection [pgSQL| SELECT count(note_id) FROM notes WHERE user_id = ${userId}; |] :: IO [Maybe Int64]

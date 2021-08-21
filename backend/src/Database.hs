@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Database where
 
 import Database.PostgreSQL.Typed.Protocol

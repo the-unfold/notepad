@@ -52,11 +52,13 @@ common deps
     -- for stm-chans
     , stm 
   default-extensions: 
-    -- NoMonomorphismRestriction
-    -- DuplicateRecordFields
-    -- OverloadedStrings
-    -- ImportQualifiedPost
-    -- NamedFieldPuns
+    NoMonomorphismRestriction
+    DuplicateRecordFields
+    OverloadedStrings
+    ImportQualifiedPost
+    NamedFieldPuns
+    TypeApplications
+    TypeOperators
   ghc-options:
     -- TODO: clarify these 3 options
     -threaded

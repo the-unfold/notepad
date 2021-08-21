@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module ConcurrencyHelpers where
 
 import Control.Concurrent.MVar

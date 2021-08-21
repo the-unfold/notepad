@@ -1,12 +1,8 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeOperators #-}
 
 module HttpServer where
 
