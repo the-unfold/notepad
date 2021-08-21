@@ -14,12 +14,12 @@ import GHC.Generics (Generic)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.UUID as UUID
-import Data.Int (Int16, Int32, Int64)
+import Data.Int (Int32, Int64)
 import Control.Exception (try)
 import Control.Monad.Trans (MonadIO (liftIO))
-import Control.Monad.Except (liftEither, ExceptT(..), runExceptT, withExceptT, throwError)
-import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields, useTPGDatabase)
-import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL, pgExecute)
+import Control.Monad.Except (ExceptT(..), runExceptT, withExceptT, throwError)
+import Database.PostgreSQL.Typed (PGError)
+import Database.PostgreSQL.Typed.Query (pgSQL)
 import Control.Concurrent.STM.TBChan ( readTBChan, TBChan )
 import Control.Concurrent.STM ( atomically )
 import Fmt
@@ -34,8 +34,6 @@ data ProcessingError
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
 
-useTPGDatabase db -- compile time connection
-
 -- а юнит ли? возвращать результат обработки - не обязательно правильное действие.
 -- Но, с другой стороны, мы хотели бы иметь унифицированный интерфейс для регистрации ответов.
 -- Думаю, пока не будем его унифицировать, пусть каждая IO фиксирует ответ отдельно
@@ -46,7 +44,7 @@ processEvent UserRegistered {email} = do
         | includesText "unique_user_email" e = InvalidOperation "User with such email already exists."
         | otherwise = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQueryNoTransaction_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
+    runQueryWithNewConnection_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
 
 processEvent NoteAdded {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
@@ -54,10 +52,10 @@ processEvent NoteAdded {userId, content} = do
       transformError e = InternalProcessingError
       maxNotesPerUser = 2
   [Just notesCount] <- withExceptT transformError . ExceptT . try $ do
-    runQueryNoTransaction [pgSQL| SELECT count(note_id) FROM notes WHERE user_id = ${userId}; |] :: IO [Maybe Int64]
+    runQueryWithNewConnection [pgSQL| SELECT count(note_id) FROM notes WHERE user_id = ${userId}; |] :: IO [Maybe Int64]
   liftIO $ fmtLn $ "notesCount: " +| notesCount |+ ""
   if notesCount < maxNotesPerUser
-    then withExceptT transformError . ExceptT . try $ runQueryNoTransaction_ [pgSQL| INSERT INTO notes (user_id, content) VALUES (${userId}, ${content}); |]
+    then withExceptT transformError . ExceptT . try $ runQueryWithNewConnection_ [pgSQL| INSERT INTO notes (user_id, content) VALUES (${userId}, ${content}); |]
     else throwError . InvalidOperation . fmt $ "Notes limit of " +|maxNotesPerUser|+ " exceeded. Consider upgrading to the Platinum Pro Plus plan to submit up to 4 notes."
 
 processEvent NoteRemoved { userId, noteId } = do
@@ -68,7 +66,7 @@ processEvent NoteRemoved { userId, noteId } = do
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQueryNoTransaction_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
+    runQueryWithNewConnection_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
 processEvent NoteUpdated { userId, noteId, content } = do
   -- Причины облома: пользователь редактирует не своё 
@@ -78,7 +76,7 @@ processEvent NoteUpdated { userId, noteId, content } = do
   let transformError :: PGError -> ProcessingError
       transformError e = InternalProcessingError
   withExceptT transformError . ExceptT . try $
-    runQueryNoTransaction_ [pgSQL| UPDATE notes SET content = ${content} WHERE user_id = ${userId} AND note_id = ${noteId}; |]
+    runQueryWithNewConnection_ [pgSQL| UPDATE notes SET content = ${content} WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
 preProcessEvent :: Int32 -> UUID.UUID -> Aeson.Value -> Bool -> ExceptT ProcessingError IO ()
 preProcessEvent eventId uuid body isFirst = do
@@ -93,7 +91,7 @@ preProcessEvent eventId uuid body isFirst = do
               if isFirst 
                 then [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |] 
                 else [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |]
-      liftIO $ runQueryNoTransaction_ markAsProcessed
+      liftIO $ runQueryWithNewConnection_ markAsProcessed
 
     -- Event body was unexpected
     Aeson.Error _ -> pure ()
@@ -101,7 +99,7 @@ preProcessEvent eventId uuid body isFirst = do
 processEventsInLoop :: TBChan () ->  IO ()
 processEventsInLoop chan = do
   newEvents <-
-    runQueryNoTransaction
+    runQueryWithNewConnection
       [pgSQL| 
     SELECT event_id, uuid, body, is_first
     FROM (
@@ -123,7 +121,7 @@ processEventsInLoop chan = do
       runExceptT $ preProcessEvent eventId uuid body isFirst
       pure ()
     _ -> do 
-      putStrLn "Waiting for a signal to process new events..."
+      putStrLn "No unprocessed events found. Waiting for a signal to process new events..."
       atomically $ readTBChan chan 
       putStrLn "Got a signal, processing!"
   processEventsInLoop chan

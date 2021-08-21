@@ -3,25 +3,14 @@
 module Database where
 
 import Database.PostgreSQL.Typed.Protocol
-import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields, useTPGDatabase)
-import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery, pgSQL, pgExecute)
-import Database.PostgreSQL.Typed.Types (PGType)
+import Database.PostgreSQL.Typed (PGError, pgConnect, pgDisconnect, pgErrorFields)
+import Database.PostgreSQL.Typed.Query (PGSimpleQuery, pgQuery)
+import Database.PostgreSQL.Typed.TH (getTPGDatabase)
 import qualified Network.Socket as Net
 import qualified Data.ByteString.Char8 as BSC
 import qualified Data.Map.Lazy as Map
-
-db :: PGDatabase
-db =
-  PGDatabase
-    { pgDBAddr = Right $ Net.SockAddrInet 5431 (Net.tupleToHostAddress (127, 0, 0, 1)),
-      pgDBName = "notepad",
-      pgDBUser = "admin",
-      pgDBPass = "admin",
-      pgDBParams = [],
-      pgDBDebug = False,
-      pgDBLogMessage = print . PGError,
-      pgDBTLS = TlsDisabled
-    }
+import System.Environment (getEnv)
+import Control.Monad (void)
 
 includesText :: BSC.ByteString -> PGError -> Bool
 includesText subStr = BSC.isInfixOf subStr . extractMessage
@@ -29,21 +18,13 @@ includesText subStr = BSC.isInfixOf subStr . extractMessage
     extractMessage :: PGError -> BSC.ByteString
     extractMessage = Map.findWithDefault "" 'M' . pgErrorFields
 
-runQueryNoTransaction :: PGSimpleQuery a -> IO [a]
-runQueryNoTransaction q = do
+runQueryWithNewConnection :: PGSimpleQuery a -> IO [a]
+runQueryWithNewConnection q = do
+  db <- getTPGDatabase
   conn <- pgConnect db
   res <- pgQuery conn q
   pgDisconnect conn
   pure res
 
-runQueryNoTransaction_ :: PGSimpleQuery a -> IO ()
-runQueryNoTransaction_ q = do
-  conn <- pgConnect db
-  pgQuery conn q
-  pgDisconnect conn
-  pure ()
-
-pgQuery_ :: PGConnection -> PGSimpleQuery a -> IO ()
-pgQuery_ conn q = do
-  pgQuery conn q
-  pure ()
+runQueryWithNewConnection_ :: PGSimpleQuery a -> IO ()
+runQueryWithNewConnection_ = void . runQueryWithNewConnection

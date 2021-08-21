@@ -43,7 +43,7 @@ import qualified Data.Aeson as Aeson
 import qualified Data.UUID as UUID
 import GHC.Generics (Generic)
 import Data.Text (Text)
-import Data.Int (Int16, Int32, Int64)
+import Data.Int (Int32)
 import Data.HVect
 import Control.Monad.Trans (MonadIO (liftIO))
 import Data.IORef (IORef, atomicModifyIORef', newIORef)

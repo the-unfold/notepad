@@ -1,6 +1,34 @@
 version: '3.7'
 
 services:
+  db:
+    image: postgres:12.4-alpine
+    restart: always
+    volumes:
+      # Scripts only run it data directory is empty (from official docs)
+      # - ./db/0.recreate.sql:/docker-entrypoint-initdb.d/0.recreate.sql
+      - ./db/1.init.sql:/docker-entrypoint-initdb.d/1.init.sql
+      # - ./db/2.populate.sql:/docker-entrypoint-initdb.d/2.populate.sql
+      # - ./db/data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: notepad
+    command: ["postgres", "-c", "log_statement=all"]
+
+  # backend:
+  #   build:
+  #     context: backend
+  #     dockerfile: Dockerfile.prod
+  #   environment:
+  #     - TPG_DB=notepad
+  #     - TPG_USER=admin
+  #     - TPG_PASS=admin
+  #     - TPG_HOST=localhost
+  #     - TPG_PORT=5431
+
   frontend:
     build:
       context: frontend
