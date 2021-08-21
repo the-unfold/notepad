@@ -1,10 +1,10 @@
-module Main where
+module Main (main) where
 
 import ConcurrencyHelpers
 import Control.Concurrent (newMVar)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBChan (newTBChan)
-import EventProcessor ( processEventsInLoop )
+import EventProcessor (processEventsInLoop)
 import HttpServer (handleRequests)
 
 main :: IO ()

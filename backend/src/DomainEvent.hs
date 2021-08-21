@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 
-module DomainEvent where
+module DomainEvent (DomainEvent (..)) where
 
 import Data.Aeson qualified as Aeson
 import Data.Int (Int32)

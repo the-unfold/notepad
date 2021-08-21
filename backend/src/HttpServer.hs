@@ -4,7 +4,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module HttpServer where
+module HttpServer (handleRequests) where
 
 import Control.Concurrent.STM.TBChan (TBChan)
 import Control.Monad.Trans (MonadIO (liftIO))
@@ -34,10 +34,7 @@ import Web.Spock
     var,
     (<//>),
   )
-import Web.Spock.Config
-  ( PoolOrConn (PCNoDatabase),
-    defaultSpockCfg,
-  )
+import Web.Spock.Config (PoolOrConn (PCNoDatabase), defaultSpockCfg)
 
 data MySession = EmptySession
 

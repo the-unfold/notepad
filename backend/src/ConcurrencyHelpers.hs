@@ -1,6 +1,6 @@
 {-# LANGUAGE Safe #-}
 
-module ConcurrencyHelpers where
+module ConcurrencyHelpers (waitForChildren, forkChild) where
 
 import Control.Concurrent (ThreadId, forkFinally)
 import safe Control.Concurrent.MVar (MVar, newEmptyMVar, putMVar, takeMVar)

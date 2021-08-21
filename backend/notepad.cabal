@@ -76,12 +76,10 @@ common deps
     -Wno-unused-packages
     -- Temporarily disabled warnings which need to be fixed eventually
     -Wno-missing-import-lists
-    -Wno-missing-export-lists
     -- The partial-fields warning makes sense, but requires refactoring of the DomainEvent 
     --  (also try enabling it after GHC version is bumped)
     -Wno-partial-fields
   default-language:    Haskell2010    
-
 
 executable server
   import:              deps

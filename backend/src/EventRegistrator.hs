@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module EventRegistrator where
+module EventRegistrator (insertEvent) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBChan (TBChan, tryWriteTBChan)

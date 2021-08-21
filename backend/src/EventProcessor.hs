@@ -5,7 +5,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module EventProcessor where
+module EventProcessor (processEventsInLoop) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBChan (TBChan, readTBChan)

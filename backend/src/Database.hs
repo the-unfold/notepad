@@ -1,4 +1,4 @@
-module Database where
+module Database (includesText, runQueryWithNewConnection, runQueryWithNewConnection_) where
 
 import Control.Monad (void)
 import Data.ByteString.Char8 qualified as BSC
