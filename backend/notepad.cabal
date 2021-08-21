@@ -82,7 +82,6 @@ common deps
     -Wno-missing-export-lists
     -Wno-prepositive-qualified-module
     -Wno-partial-fields
-    -Wno-unused-do-bind
     -Wno-type-defaults
   default-language:    Haskell2010    
 

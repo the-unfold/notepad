@@ -19,6 +19,7 @@ import Database.PostgreSQL.Typed (PGError)
 import Database.PostgreSQL.Typed.Query (pgSQL)
 import Control.Concurrent.STM.TBChan ( readTBChan, TBChan )
 import Control.Concurrent.STM ( atomically )
+import Control.Monad (void)
 import Fmt
 
 import DomainEvent
@@ -115,8 +116,7 @@ processEventsInLoop chan = do
   case newEvents of
     [(Just eventId, Just uuid, Just body, Just isFirst)] -> do
       putStrLn $ "processing event " ++ show (eventId, uuid, isFirst)
-      runExceptT $ preProcessEvent eventId uuid body isFirst
-      pure ()
+      void $ runExceptT $ preProcessEvent eventId uuid body isFirst
     _ -> do 
       putStrLn "No unprocessed events found. Waiting for a signal to process new events..."
       atomically $ readTBChan chan 
