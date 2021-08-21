@@ -45,7 +45,7 @@ processEvent UserRegistered {email} = do
 processEvent NoteAdded {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
   let transformError :: PGError -> ProcessingError
-      transformError e = InternalProcessingError
+      transformError _err = InternalProcessingError
       maxNotesPerUser :: Int64
       maxNotesPerUser = 2
   [Just notesCount] <- withExceptT transformError . ExceptT . try $ do
@@ -61,7 +61,7 @@ processEvent NoteRemoved { userId, noteId } = do
   -- при несовпадении владельца оно будет 0 и ничего не изменится,
   -- но ошибку-то надо сообщать), ...
   let transformError :: PGError -> ProcessingError
-      transformError e = InternalProcessingError
+      transformError _err = InternalProcessingError
   withExceptT transformError . ExceptT . try $
     runQueryWithNewConnection_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
@@ -71,12 +71,12 @@ processEvent NoteUpdated { userId, noteId, content } = do
   -- при несовпадении владельца оно будет 0 и ничего не изменится,
   -- но ошибку-то надо сообщать), ...
   let transformError :: PGError -> ProcessingError
-      transformError e = InternalProcessingError
+      transformError _err = InternalProcessingError
   withExceptT transformError . ExceptT . try $
     runQueryWithNewConnection_ [pgSQL| UPDATE notes SET content = ${content} WHERE user_id = ${userId} AND note_id = ${noteId}; |]
 
 preProcessEvent :: Int32 -> UUID.UUID -> Aeson.Value -> Bool -> ExceptT ProcessingError IO ()
-preProcessEvent eventId uuid body isFirst = do
+preProcessEvent eventId _uuid body isFirst = do
   case Aeson.fromJSON body of
     -- Event body was fine
     Aeson.Success evt -> do

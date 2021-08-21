@@ -35,7 +35,6 @@ import Data.Text (Text)
 import Data.Int (Int32)
 import Data.HVect
 import Control.Monad.Trans (MonadIO (liftIO))
-import Data.IORef (newIORef)
 import Control.Concurrent.STM.TBChan ( TBChan )
 
 import qualified DomainEvent
@@ -65,7 +64,6 @@ noteAddedFromPayload userId = DomainEvent.NoteAdded userId . (content :: NoteAdd
 handleRequests :: TBChan () -> IO ()
 handleRequests chan =
   do
-    ref <- newIORef 0
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase ()
     runSpock 8080 (spock spockCfg $ app chan)
 
@@ -94,7 +92,7 @@ app chan = prehook initHook $ do
 
   post ("notes" <//> "update" <//> var) $ \noteId -> do
     body <- jsonBody
-    context <- getContext
+    _context <- getContext
     let resultOfPayload = case body of
           Just validJson -> Aeson.fromJSON @(WithUuid NoteAddedPayload) validJson
           _ -> fail "Json body expected. Status 400"
