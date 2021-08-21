@@ -20,16 +20,7 @@ source-repository head
   type: git
   location: https://github.com/githubuser/haskell-spock
 
-library
-  exposed-modules:
-      ConcurrencyHelpers
-      Database
-      DomainEvent
-      EventProcessor
-      EventRegistrator
-      HttpServer
-  hs-source-dirs:
-      src
+common deps
   build-depends:
       base >= 4.7 && < 5
     -- http server
@@ -60,28 +51,39 @@ library
     , stm-chans 
     -- for stm-chans
     , stm 
-  default-language: Haskell2010
+  default-extensions: 
+    -- NoMonomorphismRestriction
+    -- DuplicateRecordFields
+    -- OverloadedStrings
+    -- ImportQualifiedPost
+    -- NamedFieldPuns
+  ghc-options:
+    -- TODO: clarify these 3 options
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+    -- Enable all possible warnings as errors
+    -- -Werror
+    -- -Weverything
+    -- Intentionally ignore some warnings
+    -- -Wno-all-missed-specialisations
+    -- -Wno-implicit-prelude
+    -- -Wno-missed-specialisations
+    -- -Wno-missing-local-signatures
+    -- -Wno-unsafe
+    -- -Wno-missing-safe-haskell-mode
+    -- -Wno-unused-packages
+  default-language:    Haskell2010    
+
 
 executable server
-  main-is: Main.hs
-  hs-source-dirs:
-      app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      Spock >=0.14
-    , aeson
-    , base >=4.7 && <5
-    , bytestring
-    , containers
-    , fmt
-    , notepad
-    , http-types
-    , hvect
-    , mtl
-    , network
-    , postgresql-typed
-    , stm
-    , stm-chans
-    , text
-    , uuid
-  default-language: Haskell2010
+  import:              deps
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  other-modules:       
+    ConcurrencyHelpers
+    Database
+    DomainEvent
+    EventProcessor
+    EventRegistrator
+    HttpServer
