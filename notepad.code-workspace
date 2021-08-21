@@ -16,7 +16,7 @@
       "editor.formatOnSave": true
     },
     "[haskell]": {
-      "editor.formatOnSave": false
+      "editor.formatOnSave": true
     },
     "elmLS.elmReviewDiagnostics": "warning"
   },
