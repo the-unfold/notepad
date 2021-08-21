@@ -1,3 +1,5 @@
+{-# LANGUAGE Safe #-}
+
 module ConcurrencyHelpers where
 
 import Control.Concurrent.MVar

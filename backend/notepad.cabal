@@ -78,7 +78,6 @@ common deps
     -Wno-missing-safe-haskell-mode
     -Wno-unused-packages
     -- Temporarily disabled warnings which need to be fixed eventually
-    -Wno-safe
     -Wno-missing-import-lists
     -Wno-missing-export-lists
     -Wno-unused-imports
