@@ -81,8 +81,9 @@ common deps
     -Wno-missing-import-lists
     -Wno-missing-export-lists
     -Wno-prepositive-qualified-module
+    -- The partial-fields warning makes sense, but requires refactoring of the DomainEvent 
+    --  (also try enabling it after GHC version is bumped)
     -Wno-partial-fields
-    -Wno-type-defaults
   default-language:    Haskell2010    
 
 
