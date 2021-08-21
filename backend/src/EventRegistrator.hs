@@ -1,20 +1,19 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module EventRegistrator where
 
-import qualified Data.UUID as UUID
-import qualified Data.Aeson as Aeson
-import Database.PostgreSQL.Typed.Query (pgSQL)
-import Control.Concurrent.STM ( atomically )
-import Control.Concurrent.STM.TBChan ( tryWriteTBChan, TBChan )
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TBChan (TBChan, tryWriteTBChan)
 import Control.Monad (void)
-
-import DomainEvent
-import Database
+import Data.Aeson qualified as Aeson
+import Data.UUID qualified as UUID
+import Database (runQueryWithNewConnection_)
+import Database.PostgreSQL.Typed.Query (pgSQL)
+import DomainEvent (DomainEvent)
 
 insertEvent :: TBChan () -> UUID.UUID -> DomainEvent -> IO ()
-insertEvent chan uuid body = do 
-    runQueryWithNewConnection_ [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
-    void $ atomically $ tryWriteTBChan chan ()
+insertEvent chan uuid body = do
+  runQueryWithNewConnection_ [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
+  void $ atomically $ tryWriteTBChan chan ()

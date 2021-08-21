@@ -6,6 +6,18 @@
 
 module HttpServer where
 
+import Control.Concurrent.STM.TBChan (TBChan)
+import Control.Monad.Trans (MonadIO (liftIO))
+import Data.Aeson qualified as Aeson
+import Data.HVect (HVect (..), head)
+import Data.Int (Int32)
+import Data.Text (Text)
+import Data.UUID qualified as UUID
+import DomainEvent (DomainEvent)
+import DomainEvent qualified
+import EventRegistrator (insertEvent)
+import GHC.Generics (Generic)
+import Network.HTTP.Types qualified as HttpTypes
 import Web.Spock
   ( ActionCtxT,
     SpockM,
@@ -22,24 +34,10 @@ import Web.Spock
     var,
     (<//>),
   )
-
 import Web.Spock.Config
   ( PoolOrConn (PCNoDatabase),
     defaultSpockCfg,
   )
-import qualified Network.HTTP.Types as HttpTypes
-import qualified Data.Aeson as Aeson
-import qualified Data.UUID as UUID
-import GHC.Generics (Generic)
-import Data.Text (Text)
-import Data.Int (Int32)
-import Data.HVect
-import Control.Monad.Trans (MonadIO (liftIO))
-import Control.Concurrent.STM.TBChan ( TBChan )
-
-import qualified DomainEvent
-import DomainEvent (DomainEvent)
-import EventRegistrator
 
 data MySession = EmptySession
 
@@ -66,7 +64,6 @@ handleRequests chan =
   do
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase ()
     runSpock 8080 (spock spockCfg $ app chan)
-
 
 app :: TBChan () -> SpockM () MySession () ()
 app chan = prehook initHook $ do

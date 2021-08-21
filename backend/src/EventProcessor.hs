@@ -2,28 +2,31 @@
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module EventProcessor where
 
-import qualified Data.Aeson as Aeson
-import GHC.Generics (Generic)
-import Data.Text (Text)
-import qualified Data.UUID as UUID
-import Data.Int (Int32, Int64)
+import Control.Concurrent.STM (atomically)
+import Control.Concurrent.STM.TBChan (TBChan, readTBChan)
 import Control.Exception (try)
+import Control.Monad (void)
+import Control.Monad.Except (ExceptT (..), runExceptT, throwError, withExceptT)
 import Control.Monad.Trans (MonadIO (liftIO))
-import Control.Monad.Except (ExceptT(..), runExceptT, withExceptT, throwError)
+import Data.Aeson qualified as Aeson
+import Data.Int (Int32, Int64)
+import Data.Text (Text)
+import Data.UUID qualified as UUID
+import Database
+  ( includesText,
+    runQueryWithNewConnection,
+    runQueryWithNewConnection_,
+  )
 import Database.PostgreSQL.Typed (PGError)
 import Database.PostgreSQL.Typed.Query (pgSQL)
-import Control.Concurrent.STM.TBChan ( readTBChan, TBChan )
-import Control.Concurrent.STM ( atomically )
-import Control.Monad (void)
-import Fmt
-
-import DomainEvent
-import Database
+import DomainEvent (DomainEvent (..))
+import Fmt (fmt, fmtLn, (+|), (|+))
+import GHC.Generics (Generic)
 
 data ProcessingError
   = InternalProcessingError
@@ -42,7 +45,6 @@ processEvent UserRegistered {email} = do
         | otherwise = InternalProcessingError
   withExceptT transformError . ExceptT . try $
     runQueryWithNewConnection_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
-
 processEvent NoteAdded {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
   let transformError :: PGError -> ProcessingError
@@ -54,10 +56,9 @@ processEvent NoteAdded {userId, content} = do
   liftIO $ fmtLn $ "notesCount: " +| notesCount |+ ""
   if notesCount < maxNotesPerUser
     then withExceptT transformError . ExceptT . try $ runQueryWithNewConnection_ [pgSQL| INSERT INTO notes (user_id, content) VALUES (${userId}, ${content}); |]
-    else throwError . InvalidOperation . fmt $ "Notes limit of " +|maxNotesPerUser|+ " exceeded. Consider upgrading to the Platinum Pro Plus plan to submit up to 4 notes."
-
-processEvent NoteRemoved { userId, noteId } = do
-  -- Причины облома: пользователь удаляет не своё 
+    else throwError . InvalidOperation . fmt $ "Notes limit of " +| maxNotesPerUser |+ " exceeded. Consider upgrading to the Platinum Pro Plus plan to submit up to 4 notes."
+processEvent NoteRemoved {userId, noteId} = do
+  -- Причины облома: пользователь удаляет не своё
   -- (в таком случае нам нужно прочитать количество affected строк,
   -- при несовпадении владельца оно будет 0 и ничего не изменится,
   -- но ошибку-то надо сообщать), ...
@@ -65,9 +66,8 @@ processEvent NoteRemoved { userId, noteId } = do
       transformError _err = InternalProcessingError
   withExceptT transformError . ExceptT . try $
     runQueryWithNewConnection_ [pgSQL| DELETE from notes WHERE user_id = ${userId} AND note_id = ${noteId}; |]
-
-processEvent NoteUpdated { userId, noteId, content } = do
-  -- Причины облома: пользователь редактирует не своё 
+processEvent NoteUpdated {userId, noteId, content} = do
+  -- Причины облома: пользователь редактирует не своё
   -- (в таком случае нам нужно прочитать количество affected строк,
   -- при несовпадении владельца оно будет 0 и ничего не изменится,
   -- но ошибку-то надо сообщать), ...
@@ -85,16 +85,16 @@ preProcessEvent eventId _uuid body isFirst = do
       res <- liftIO . runExceptT $ processEvent evt
       liftIO $ print res
       -- Open a brand new DB connection for transaction, so that we mark a failed event as processed anyways
-      let markAsProcessed = 
-              if isFirst 
-                then [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |] 
-                else [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |]
+      let markAsProcessed =
+            if isFirst
+              then [pgSQL| INSERT INTO last_processed_event (event_id) VALUES (${eventId}); |]
+              else [pgSQL| UPDATE last_processed_event SET event_id = ${eventId}; |]
       liftIO $ runQueryWithNewConnection_ markAsProcessed
 
     -- Event body was unexpected
     Aeson.Error _ -> pure ()
 
-processEventsInLoop :: TBChan () ->  IO ()
+processEventsInLoop :: TBChan () -> IO ()
 processEventsInLoop chan = do
   newEvents <-
     runQueryWithNewConnection
@@ -117,8 +117,8 @@ processEventsInLoop chan = do
     [(Just eventId, Just uuid, Just body, Just isFirst)] -> do
       putStrLn $ "processing event " ++ show (eventId, uuid, isFirst)
       void $ runExceptT $ preProcessEvent eventId uuid body isFirst
-    _ -> do 
+    _ -> do
       putStrLn "No unprocessed events found. Waiting for a signal to process new events..."
-      atomically $ readTBChan chan 
+      atomically $ readTBChan chan
       putStrLn "Got a signal, processing!"
   processEventsInLoop chan
