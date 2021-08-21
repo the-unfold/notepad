@@ -1,4 +1,4 @@
-cabal-version: 1.12
+cabal-version:  3.0
 
 name:           notepad
 version:        0.1.0.0
@@ -8,8 +8,9 @@ bug-reports:    https://github.com/githubuser/haskell-spock/issues
 author:         Author name here
 maintainer:     example@example.com
 copyright:      2021 Author name here
-license:        BSD3
+license:        BSD-3-Clause
 license-file:   LICENSE
+category:       Web
 build-type:     Simple
 extra-source-files:
     README.md
