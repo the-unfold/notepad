@@ -38,7 +38,6 @@ library
   build-depends:
       Spock >=0.14
     , aeson
-    , async
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -64,7 +63,6 @@ executable haskell-spock-exe
   build-depends:
       Spock >=0.14
     , aeson
-    , async
     , base >=4.7 && <5
     , bytestring
     , containers
@@ -92,7 +90,6 @@ test-suite haskell-spock-test
   build-depends:
       Spock >=0.14
     , aeson
-    , async
     , base >=4.7 && <5
     , bytestring
     , containers

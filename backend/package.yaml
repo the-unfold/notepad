@@ -21,21 +21,20 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-- Spock >= 0.14
-- bytestring
-- containers
-- postgresql-typed
-- network
-- text
-- mtl
-- aeson
-- http-types
-- async
-- uuid
-- hvect
-- fmt
-- stm-chans
-- stm
+- Spock >= 0.14 # http server
+- bytestring # for extracting postgres error messages
+- containers # for Data.Map (for extracting postgres error messages)
+- postgresql-typed # for compile-time typeckecking against real db
+- network # for configuring db connection
+- text # for efficient strings
+- mtl # for monad transformers in general
+- aeson # for JSON
+- http-types # for specifying status codes for HTTP responses
+- uuid # for UUIDs
+- hvect # for specifying types for http request hooks
+- fmt # for composing strings
+- stm-chans # for stm-chans
+- stm # for stm-chans
 
 library:
   source-dirs: src

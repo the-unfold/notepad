@@ -1,13 +1,12 @@
-import Control.Concurrent.Async (concurrently_)
 
-import EventProcessor
 import Control.Concurrent ( newMVar )
 import Control.Concurrent.STM.TBChan ( newTBChan, TBChan )
 import Control.Concurrent.STM ( atomically)
 
-import HttpServer
-import DomainEvent
 import ConcurrencyHelpers
+import DomainEvent
+import EventProcessor
+import HttpServer ( handleRequests )
 
 main :: IO ()
 main = do
