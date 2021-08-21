@@ -12,7 +12,7 @@ suite =
         [ describe "view"
             [ test "Shows app title" <|
                 \() ->
-                    Main.view { unit = () }
+                    Main.view { email = "john@galt.com" }
                         |> Query.fromHtml
                         |> Query.has [ text "Notepad" ]
             ]
