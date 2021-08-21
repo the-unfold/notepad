@@ -75,6 +75,8 @@ common deps
     -Wno-missing-safe-haskell-mode
     -Wno-unused-packages
     -- Temporarily disabled warnings which need to be fixed eventually
+    -- It is inconvenient to specify imports for all record fields and all value constructors 
+    -- We need to find a better way.
     -Wno-missing-import-lists
     -- The partial-fields warning makes sense, but requires refactoring of the DomainEvent 
     --  (also try enabling it after GHC version is bumped)
