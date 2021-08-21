@@ -60,21 +60,33 @@ common deps
     TypeApplications
     TypeOperators
   ghc-options:
-    -- TODO: clarify these 3 options
+    -- TODO: clarify meaning
     -threaded
+    -- TODO: clarify meaning
     -rtsopts
+    -- TODO: clarify meaning
     -with-rtsopts=-N
     -- Enable all possible warnings as errors
-    -- -Werror
-    -- -Weverything
+    -Werror
+    -Weverything
     -- Intentionally ignore some warnings
-    -- -Wno-all-missed-specialisations
-    -- -Wno-implicit-prelude
-    -- -Wno-missed-specialisations
-    -- -Wno-missing-local-signatures
-    -- -Wno-unsafe
-    -- -Wno-missing-safe-haskell-mode
-    -- -Wno-unused-packages
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-local-signatures
+    -Wno-unsafe
+    -Wno-missing-safe-haskell-mode
+    -Wno-unused-packages
+    -- Temporarily disabled warnings which need to be fixed eventually
+    -Wno-safe
+    -Wno-missing-import-lists
+    -Wno-missing-export-lists
+    -Wno-unused-imports
+    -Wno-prepositive-qualified-module
+    -Wno-partial-fields
+    -Wno-unused-do-bind
+    -Wno-unused-matches
+    -Wno-type-defaults
   default-language:    Haskell2010    
 
 
