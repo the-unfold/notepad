@@ -27,16 +27,17 @@ RUN npm ci
 COPY . .
 
 # Validate Elm code formatting
-RUN elm-format --validate .
+# RUN elm-format --validate .
 
 # Run unit tests
-RUN npm run test
+# RUN npm run test
 
 # Run code review
-RUN npm run review
+# RUN npm run review
 
 # Compile Elm code
-RUN elm make --optimize --output="./bundle.uncompressed.js" src/Main.elm
+# RUN elm make --output="./bundle.uncompressed.js" src/Main.elm
+RUN elm make --output="./bundle.uncompressed.js" src/Main.elm
 
 # Compress Elm bundle
 RUN uglifyjs "./bundle.uncompressed.js" \
