@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Browser.Navigation as BNav
 import Element exposing (..)
 import Element.Background as Background
 import Element.Events exposing (onClick)
@@ -18,6 +19,30 @@ import UI.Palette as Palette
 import UI.RenderConfig as RenderConfig exposing (RenderConfig)
 import UI.Text as Text
 import UI.TextField as TextField
+import Url
+import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, string)
+
+
+type alias TimesGiven =
+    String
+
+
+type Route
+    = Packages
+    | Fuck TimesGiven
+
+
+fuckUrlParser : Parser.Parser (TimesGiven -> a) a
+fuckUrlParser =
+    Parser.custom "FUCKSGIVEN" Just
+
+
+parser : Parser (Route -> a) a
+parser =
+    oneOf
+        [ Parser.map Packages (s "packages")
+        , Parser.map Fuck (s "fuck" </> fuckUrlParser)
+        ]
 
 
 type alias Model =
@@ -26,20 +51,58 @@ type alias Model =
 
 main : Program () Model Msg.Msg
 main =
-    Browser.document
+    Browser.application
         { init = init
         , subscriptions = always Sub.none
         , view = view renderCfg
         , update = update
+        , onUrlChange = Msg.UrlChanged
+        , onUrlRequest = Msg.LinkClicked
         }
+
+
+fromUrl : Url.Url -> Maybe Route
+fromUrl url =
+    -- The RealWorld spec treats the fragment like a path.
+    -- This makes it *literally* the path, so we can proceed
+    -- with parsing as if it had been a normal path all along.
+    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
+        |> Debug.log "before parsing"
+        |> Parser.parse parser
+        |> Debug.log "after parsing"
+
+
+routeToPage : Maybe Route -> Page.Page
+routeToPage route =
+    case route of
+        Just ((Fuck _) as x) ->
+            Page.Fuck
+
+        Just Packages ->
+            Page.Packages
+
+        _ ->
+            Page.Packages
 
 
 update : Msg.Msg -> Model -> ( Model, Cmd Msg.Msg )
 update msg model =
-    -- case msg of
-    --     Msg.NavMsg ->
-    --     _ ->
-    ( model, Cmd.none )
+    case msg of
+        Msg.UrlChanged url ->
+            let
+                page =
+                    (fromUrl >> routeToPage) url
+            in
+            ( { model | currentPage = page }, Cmd.none )
+                |> Debug.log "url change update"
+
+        Msg.LinkClicked x ->
+            ( model, Cmd.none )
+                |> Debug.log "link clicked update"
+
+        _ ->
+            ( model, Cmd.none )
+                |> Debug.log "update ignored everything"
 
 
 renderCfg : RenderConfig
@@ -47,8 +110,8 @@ renderCfg =
     RenderConfig.init { width = 1920, height = 1080 } RenderConfig.localeEnglish
 
 
-init : () -> ( Model, Cmd Msg.Msg )
-init _ =
+init : () -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
+init _ _ _ =
     ( { email = "", navState = Nav.stateInit renderCfg, currentPage = Page.Packages }, Cmd.none )
 
 
@@ -72,7 +135,7 @@ view renderConfig { navState, currentPage } =
                 (Link.link "/packages")
                 (currentPage == Page.Packages)
             , Nav.menuPage (Icon.pause "Fuck")
-                (Link.link "/fuck")
+                (Link.link "/fuck/me")
                 (currentPage == Page.Fuck)
             ]
         |> Nav.withMenuActions
@@ -89,7 +152,7 @@ getPageContainer page =
     case page of
         Page.Packages ->
             { title = "Packages"
-            , content = Nav.contentSingle <| Element.map Page.PackagesMsg (Packages.view renderCfg { email = "" })
+            , content = Nav.contentSingle <| Element.map Page.PackagesMsg <| Packages.view renderCfg { email = "" }
             , dialog = Nothing
             , hasMenu = True
             }
