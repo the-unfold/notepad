@@ -1,0 +1,96 @@
+cabal-version:  3.0
+
+name:           notepad
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/haskell-spock#readme>
+homepage:       https://github.com/githubuser/haskell-spock#readme
+bug-reports:    https://github.com/githubuser/haskell-spock/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD-3-Clause
+category:       Web
+build-type:     Simple
+extra-source-files:
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/haskell-spock
+
+common deps
+  build-depends:
+      base >= 4.7 && < 5
+    -- http server
+    , Spock >= 0.14 
+    -- for extracting postgres error messages
+    , bytestring 
+    -- for Data.Map (for extracting postgres error messages)
+    , containers 
+    -- for compile-time typeckecking against real db
+    , postgresql-typed 
+    -- for configuring db connection
+    , network 
+    -- for efficient strings
+    , text 
+    -- for monad transformers in general
+    , mtl 
+    -- for JSON
+    , aeson 
+    -- for specifying status codes for HTTP responses
+    , http-types 
+    -- for UUIDs
+    , uuid 
+    -- for specifying types for http request hooks
+    , hvect 
+    -- for composing strings
+    , fmt 
+    -- for stm-chans
+    , stm-chans 
+    -- for stm-chans
+    , stm 
+  default-extensions: 
+    NoMonomorphismRestriction
+    DuplicateRecordFields
+    OverloadedStrings
+    ImportQualifiedPost
+    NamedFieldPuns
+    TypeApplications
+    TypeOperators
+  ghc-options:
+    -- TODO: clarify meaning
+    -threaded
+    -- TODO: clarify meaning
+    -rtsopts
+    -- TODO: clarify meaning
+    -with-rtsopts=-N
+    -- Enable all possible warnings as errors
+    -Werror
+    -Weverything
+    -- Intentionally ignore some warnings
+    -Wno-all-missed-specialisations
+    -Wno-implicit-prelude
+    -Wno-missed-specialisations
+    -Wno-missing-local-signatures
+    -Wno-unsafe
+    -Wno-missing-safe-haskell-mode
+    -Wno-unused-packages
+    -- Temporarily disabled warnings which need to be fixed eventually
+    -- It is inconvenient to specify imports for all record fields and all value constructors 
+    -- We need to find a better way.
+    -Wno-missing-import-lists
+    -- The partial-fields warning makes sense, but requires refactoring of the DomainEvent 
+    --  (also try enabling it after GHC version is bumped)
+    -Wno-partial-fields
+  default-language:    Haskell2010    
+
+executable server
+  import:              deps
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  other-modules:       
+    ConcurrencyHelpers
+    Database
+    DomainEvent
+    EventProcessor
+    EventRegistrator
+    HttpServer

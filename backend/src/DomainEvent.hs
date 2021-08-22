@@ -2,12 +2,12 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 
-module DomainEvent where
+module DomainEvent (DomainEvent (..)) where
 
-import qualified Data.Aeson as Aeson
+import Data.Aeson qualified as Aeson
+import Data.Int (Int32)
 import Data.Text (Text)
 import GHC.Generics (Generic)
-import Data.Int (Int16, Int32, Int64)
 
 -- | List of all our domain events in a single event log
 data DomainEvent
