@@ -62,14 +62,8 @@ main =
 
 
 fromUrl : Url.Url -> Maybe Route
-fromUrl url =
-    -- The RealWorld spec treats the fragment like a path.
-    -- This makes it *literally* the path, so we can proceed
-    -- with parsing as if it had been a normal path all along.
-    { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing }
-        |> Debug.log "before parsing"
-        |> Parser.parse parser
-        |> Debug.log "after parsing"
+fromUrl =
+    Parser.parse parser
 
 
 routeToPage : Maybe Route -> Page.Page
@@ -85,24 +79,27 @@ routeToPage route =
             Page.Packages
 
 
+updatePageFromUrl : Url.Url -> Model -> Model
+updatePageFromUrl url model =
+    { model | currentPage = (fromUrl >> routeToPage) url }
+
+
 update : Msg.Msg -> Model -> ( Model, Cmd Msg.Msg )
 update msg model =
     case msg of
         Msg.UrlChanged url ->
-            let
-                page =
-                    (fromUrl >> routeToPage) url
-            in
-            ( { model | currentPage = page }, Cmd.none )
-                |> Debug.log "url change update"
+            ( updatePageFromUrl url model, Cmd.none )
 
         Msg.LinkClicked x ->
-            ( model, Cmd.none )
-                |> Debug.log "link clicked update"
+            case x of
+                Browser.Internal url ->
+                    ( updatePageFromUrl url model, Cmd.none )
+
+                Browser.External _ ->
+                    ( model, Cmd.none )
 
         _ ->
             ( model, Cmd.none )
-                |> Debug.log "update ignored everything"
 
 
 renderCfg : RenderConfig
