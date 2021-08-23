@@ -6,9 +6,9 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Events exposing (onClick)
 import Element.Font as Font
-import Fuck
 import Html exposing (Html)
 import Message as Msg
+import Notes
 import Packages
 import Page
 import UI.Button as Button
@@ -17,8 +17,6 @@ import UI.Link as Link
 import UI.NavigationContainer as Nav
 import UI.Palette as Palette
 import UI.RenderConfig as RenderConfig exposing (RenderConfig)
-import UI.Text as Text
-import UI.TextField as TextField
 import Url
 import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, string)
 
@@ -29,7 +27,7 @@ type alias TimesGiven =
 
 type Route
     = Packages
-    | Fuck TimesGiven
+    | Notes
 
 
 fuckUrlParser : Parser.Parser (TimesGiven -> a) a
@@ -41,7 +39,7 @@ parser : Parser (Route -> a) a
 parser =
     oneOf
         [ Parser.map Packages (s "packages")
-        , Parser.map Fuck (s "fuck" </> fuckUrlParser)
+        , Parser.map Notes (s "notes")
         ]
 
 
@@ -69,8 +67,8 @@ fromUrl =
 routeToPage : Maybe Route -> Page.Page
 routeToPage route =
     case route of
-        Just ((Fuck _) as x) ->
-            Page.Fuck
+        Just Notes ->
+            Page.Notes
 
         Just Packages ->
             Page.Packages
@@ -112,16 +110,6 @@ init _ _ _ =
     ( { email = "", navState = Nav.stateInit renderCfg, currentPage = Page.Packages }, Cmd.none )
 
 
-
--- testPage : Nav.Container
--- testPage =
---     { content = Nav.contentSingle <| Element.el [] (Element.text "Element body")
---     , title = "Example page"
---     , dialog = Nothing -- or Just <| Nav.dialog <| ...
---     , hasMenu = True
---     }
-
-
 view : RenderConfig -> Model -> { body : List (Html Msg.Msg), title : String }
 view renderConfig { navState, currentPage } =
     Nav.navigator Msg.NavMsg
@@ -129,11 +117,11 @@ view renderConfig { navState, currentPage } =
         (getPageContainer >> Nav.containerMap Msg.PageMsg)
         |> Nav.withMenuPages
             [ Nav.menuPage (Icon.packages "Packages")
-                (Link.link "/packages")
+                (Link.link "/note/1")
                 (currentPage == Page.Packages)
-            , Nav.menuPage (Icon.pause "Fuck")
-                (Link.link "/fuck/me")
-                (currentPage == Page.Fuck)
+            , Nav.menuPage (Icon.pause "Notes")
+                (Link.link "/notes")
+                (currentPage == Page.Notes)
             ]
         |> Nav.withMenuActions
             [ Nav.menuAction
@@ -154,9 +142,9 @@ getPageContainer page =
             , hasMenu = True
             }
 
-        Page.Fuck ->
-            { title = "Fuck"
-            , content = Nav.contentSingle Fuck.view
+        Page.Notes ->
+            { title = "Notes"
+            , content = Nav.contentSingle <| Element.map Page.NotesMsg <| Notes.view renderCfg { notes = [ Notes.Note { id = 1, content = "Fucking note" } ] }
             , dialog = Nothing
             , hasMenu = True
             }
