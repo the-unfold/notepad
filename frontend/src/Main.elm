@@ -2,23 +2,18 @@ module Main exposing (..)
 
 import Browser
 import Browser.Navigation as BNav
-import Element exposing (..)
-import Element.Background as Background
-import Element.Events exposing (onClick)
-import Element.Font as Font
+import Element
 import Html exposing (Html)
 import Message as Msg
 import Notes
 import Packages
 import Page
-import UI.Button as Button
 import UI.Icon as Icon
 import UI.Link as Link
 import UI.NavigationContainer as Nav
-import UI.Palette as Palette
 import UI.RenderConfig as RenderConfig exposing (RenderConfig)
 import Url
-import Url.Parser as Parser exposing ((</>), Parser, oneOf, s, string)
+import Url.Parser as Parser exposing (Parser, oneOf, s)
 
 
 type alias TimesGiven =

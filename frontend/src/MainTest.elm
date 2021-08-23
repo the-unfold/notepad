@@ -1,10 +1,7 @@
 module MainTest exposing (..)
 
 import Expect
-import Main
 import Test exposing (Test, describe, test)
-import Test.Html.Query as Query
-import Test.Html.Selector exposing (text)
 
 
 suite : Test

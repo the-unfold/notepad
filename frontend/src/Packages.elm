@@ -1,9 +1,7 @@
 module Packages exposing (..)
 
 import Element exposing (..)
-import Element.Background as Background
 import Element.Events exposing (onClick)
-import Element.Font as Font
 import UI.Button as Button
 import UI.Palette as Palette
 import UI.RenderConfig exposing (RenderConfig)
