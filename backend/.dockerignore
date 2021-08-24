@@ -1,0 +1,13 @@
+# Ignore everything
+**
+
+# Allow files and directories
+!/src
+!/Setup.hs
+!/stack.yaml
+!/stack.yaml.lock
+!/notepad.cabal
+
+# Ignore unnecessary files inside allowed directories
+**/.DS_Store
+**/Thumbs.db

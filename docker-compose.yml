@@ -21,6 +21,7 @@ services:
     command: ["postgres", "-c", "log_statement=all"]
 
   # backend:
+  #   # image: ...
   #   build:
   #     context: backend
   #     dockerfile: Dockerfile.prod
@@ -28,10 +29,13 @@ services:
   #     - TPG_DB=notepad
   #     - TPG_USER=admin
   #     - TPG_PASS=admin
-  #     - TPG_HOST=localhost
+  #     - TPG_HOST=db
   #     - TPG_PORT=5431
+  #   ports:
+  #     - '8000:8000'
 
   frontend:
+    # image: ...
     build:
       context: frontend
       dockerfile: Dockerfile.dev

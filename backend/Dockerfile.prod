@@ -1,0 +1,22 @@
+FROM fpco/stack-build:lts-18.7 as builder
+# Alternative: # FROM haskell:8.10.6 as builder
+
+# Copy sources
+COPY src /app/src
+COPY Setup.hs stack.yaml stack.yaml.lock notepad.cabal /app/
+
+# TODO: while building a container, set typed-postgresql environment variables so that they point to localhost.
+# Building an image has nothing to do with the docker network.
+
+# Build the app, saving binaries to ~/.local/bin/
+WORKDIR /app
+RUN stack build --copy-bins
+
+# Store server binary in a "blank" container
+FROM ubuntu:21.04
+
+COPY --from=builder /root/.local/bin/server /app/server
+
+EXPOSE 8000
+
+CMD ["/app/server"]
