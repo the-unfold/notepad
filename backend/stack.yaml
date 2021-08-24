@@ -22,6 +22,9 @@
 # Time to switch to Servant
 resolver: lts-18.7
 
+# Not a good practice really
+allow-newer: true
+
 # User packages to be built.
 # Various formats can be used as shown in the example below.
 #
@@ -49,6 +52,8 @@ extra-deps:
   - reroute-0.6.0.0
   - stm-containers-1.2
   - stm-hamt-1.2.0.6
+  - elm-syntax-0.3.1.0
+  - haskell-to-elm-0.3.2.0
 # Override default flag values for local packages and extra-deps
 # flags: {}
 

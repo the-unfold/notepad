@@ -16,4 +16,3 @@ type Msg
     | SessionLogout
     | UrlChanged Url.Url
     | LinkClicked Browser.UrlRequest
-    | NavigateTo Page.Page

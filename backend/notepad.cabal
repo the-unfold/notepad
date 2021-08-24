@@ -44,10 +44,26 @@ common deps
     , hvect 
     -- for composing strings
     , fmt 
-    -- for stm-chans
+    -- for subscribing to new events
     , stm-chans 
     -- for stm-chans
     , stm 
+    -- for elm codegen
+    , generics-sop
+    -- for elm codegen
+    , haskell-to-elm
+    -- for elm codegen
+    , elm-syntax
+    -- for elm codegen
+    , filepath
+    -- for elm codegen
+    , directory
+    -- for elm codegen
+    , process
+    -- for elm codegen
+    , prettyprinter
+    -- for elm codegen
+    , unordered-containers
   default-extensions: 
     NoMonomorphismRestriction
     DuplicateRecordFields
@@ -88,7 +104,23 @@ executable server
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       
-    ConcurrencyHelpers
+    Utils.Concurrency
+    Utils.ElmDeriving
+    Utils.Codegen
+    Database
+    DomainEvent
+    EventProcessor
+    EventRegistrator
+    HttpServer
+
+executable codegen
+  import:              deps
+  hs-source-dirs:      src
+  main-is:             CodegenMain.hs
+  other-modules:       
+    Utils.Concurrency
+    Utils.ElmDeriving
+    Utils.Codegen
     Database
     DomainEvent
     EventProcessor

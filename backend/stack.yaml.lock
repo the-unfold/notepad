@@ -39,6 +39,20 @@ packages:
       sha256: 1920790535af832b76e7583c33ecf51f8b0b0c3615ef1db1c8ed9be19622c1db
   original:
     hackage: stm-hamt-1.2.0.6
+- completed:
+    hackage: elm-syntax-0.3.1.0@sha256:f03b80b94d7280bd2df423945879220465997e74b4f991bc6e09e9ed264aa3c2,2257
+    pantry-tree:
+      size: 788
+      sha256: 1df4f5c618a0db7fb64d74aeea652ff10102955032101ba980a2127494133698
+  original:
+    hackage: elm-syntax-0.3.1.0
+- completed:
+    hackage: haskell-to-elm-0.3.2.0@sha256:02085cf6ac5c1c696c1dc923033b5f01509fcbed67c32cc79139704888821e60,4441
+    pantry-tree:
+      size: 650
+      sha256: 118740f5a865608a00049a271f2a84af8ae1957f02c013967a2d363b1a80c800
+  original:
+    hackage: haskell-to-elm-0.3.2.0
 snapshots:
 - completed:
     size: 587113
