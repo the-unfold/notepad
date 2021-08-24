@@ -1,4 +1,8 @@
-# haskell-spock
+# notepad
+
+<img src="docs/icon.png" alt="notepad" width="300"/>
+
+- [TODO](docs/TODO.md)
 
 ## Prerequisites
 
