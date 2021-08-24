@@ -1,5 +1,12 @@
 # haskell-spock
 
+## Prerequisites
+
+- For building docker images from the codebase you only need Docker and `docker-compose`.
+- For developing with good editor support and running apps outside of docker, you need SCode + all recommended extensions
+  - For frontend, global: `elm`, `elm-format`, `elm-review`.
+  - For backend, global: `stack` _(`ghc`, `ormolu`, `hlint`, `ghc` and `cabal` will probably be installed by language extensions, not sure. But they are used anyways, so you can install them yourself.)_
+
 ## Initial setup
 
 - Copy `.env.example` to `.env`
