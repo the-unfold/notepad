@@ -1,8 +1,36 @@
 # notepad
 
+A fullstack note keeping application built on Haskell and Elm
+
 <img src="docs/icon.png" alt="notepad" width="300"/>
 
 - [TODO](docs/TODO.md)
+
+## Why?
+
+It's a proof-of-concept project. Its priorities are consistency, type-safety, reproducibility.
+
+- Haskell
+- Event Sourcing
+- Postgres as an event log
+- Postgres as a relational database for projections
+- Type checking against a real database at compile time (monorepository, no data needed, only migrations, and if CI passes, then backend and DB are consistent at particular commit)
+- Editor setup for formatting and all the tools
+
+- Elm
+- Code generation from Haskell (monorepository, frontend type-checks against backend, if CI passes, then frontend and backend are consisntent at particular commit)
+- Elm-UI
+- Paak-UI
+- Elm-test and elm-review
+- Editor setup for formatting and all the tools
+
+- Everything is deployed in Docker containers
+
+### User story
+
+- User can authenticate with Okta
+- User can view his notes with the web application
+- User can add a note, edit a note or delete a note
 
 ## Prerequisites
 
