@@ -18,9 +18,15 @@
     </noscript>
     <div id="elm-node"></div>
     <script>
+      const env = {
+        ENV_BACKEND_URL: 'http://localhost:8000',
+      }
       Elm.Main.init({
-        node: document.getElementById("elm-node"),
-      });
+        flags: {
+          backendUrl: env.ENV_BACKEND_URL,
+        },
+        node: document.getElementById('elm-node'),
+      })
     </script>
   </body>
 </html>

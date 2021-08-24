@@ -6,6 +6,8 @@
 !/elm.json
 !/package.json
 !/package-lock.json
+!/substitute_variables.sh
+!/.prettierrc
 !/src/**
 !/review/src/**/*.elm
 !/review/elm.json
@@ -15,3 +17,4 @@
 # Ignore unnecessary files inside allowed directories
 **/.DS_Store
 **/Thumbs.db
+**/elm-stuff/**

@@ -42,7 +42,12 @@ type alias Model =
     { email : String, navState : Nav.State, currentPage : Page.Page }
 
 
-main : Program () Model Msg.Msg
+type alias Flags =
+    { backendUrl : String
+    }
+
+
+main : Program Flags Model Msg.Msg
 main =
     Browser.application
         { init = init
@@ -100,7 +105,7 @@ renderCfg =
     RenderConfig.init { width = 1920, height = 1080 } RenderConfig.localeEnglish
 
 
-init : () -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
+init : Flags -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
 init _ _ _ =
     ( { email = "", navState = Nav.stateInit renderCfg, currentPage = Page.Packages }, Cmd.none )
 
