@@ -39,7 +39,11 @@ jobs:
       - name: Build backend image
         run: |
           docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend
+          # TODO: docker-compose -f dc.prod-github-actions.yml push backend
+
+      # ... Upcoming condegen changes ...
 
       - name: Build frontend image
         run: |
           docker-compose -f dc.prod-github-actions.yml build frontend
+          # TODO: docker-compose -f dc.prod-github-actions.yml push frontend
