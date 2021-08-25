@@ -74,7 +74,7 @@ bash -c 'export $(cat backend/.env | sed "s/#.*//g" | xargs) && code ./notepad.c
   - Note: you are not able to build a backend docker image on Apple Silicon processor yet, but once it's built, you can pull the image and run it successfully.
 
 ```sh
-docker-compose up -V db
+docker-compose up -V postgres
 ```
 
 - Rebuild backend watching files (PostgreSQL must be running and `.env` file must be filled with connection details)

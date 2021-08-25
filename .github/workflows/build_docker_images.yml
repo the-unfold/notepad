@@ -1,0 +1,45 @@
+name: build_docker_images
+on: push
+
+jobs:
+  main-job:
+    name: Build docker images
+    runs-on: ubuntu-latest
+
+    # We build images from the container to access postgres (to apply migrations)
+    container: docker/compose
+
+    services:
+      postgres:
+        image: postgres:13.4-alpine3.14
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin
+          POSTGRES_DB: notepad
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # We expose port on the host to be able to access postgres from image builder.
+          # And we can use container port without exposing it on the host
+          # if we just want to use postgres in workflow, not in builder (here - apply migrrations)
+          - 5431:5432
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Apply migrations
+        run: |
+          apk update
+          apk add postgresql-client
+          export PGPASSWORD=admin; psql -h postgres -p 5432 -U admin -d notepad -f postgres/1.init.sql
+
+      - name: Build backend image
+        run: |
+          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f docker-compose.prod.yml build backend
+
+      - name: Build frontend image
+        run: |
+          docker-compose -f docker-compose.prod.yml build frontend

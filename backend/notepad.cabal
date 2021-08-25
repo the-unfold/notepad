@@ -26,9 +26,9 @@ common deps
     , bytestring 
     -- for Data.Map (for extracting postgres error messages)
     , containers 
-    -- for compile-time typeckecking against real db
+    -- for compile-time typeckecking against real postgres DB
     , postgresql-typed 
-    -- for configuring db connection
+    -- for configuring postgres connection
     , network 
     -- for efficient strings
     , text 
