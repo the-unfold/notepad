@@ -1,4 +1,6 @@
 version: '3.8'
+# This compose file is for building and running services "like in production" on dev machine.
+# Note: for running existing versions of these services you only need to pull existing images.
 
 services:
   postgres:
@@ -23,7 +25,8 @@ services:
       context: backend
       dockerfile: Dockerfile.prod
       args:
-        - docker_host_ip
+        docker_host_ip: host.docker.internal
+
     environment:
       - TPG_DB=notepad
       - TPG_USER=admin

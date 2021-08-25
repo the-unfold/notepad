@@ -38,8 +38,8 @@ jobs:
 
       - name: Build backend image
         run: |
-          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f docker-compose.prod.yml build backend
+          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend
 
       - name: Build frontend image
         run: |
-          docker-compose -f docker-compose.prod.yml build frontend
+          docker-compose -f dc.prod-github-actions.yml build frontend

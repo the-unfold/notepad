@@ -1,0 +1,10 @@
+version: '3.8'
+# This compose file is not for building images,
+# only for running integration tests
+
+services:
+  backend:
+    # image: ...
+
+  frontend:
+    # image: ...

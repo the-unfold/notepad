@@ -119,3 +119,19 @@ npm run precommit
 ```sh
 npm run precommit-fix
 ```
+
+### Build and run production docker images locally
+
+Note: the main reason to run this file is to **debug** production docker images locally before building them on Github Actions (which should be rare).
+
+- Build
+
+```sh
+bash prod-local-build-all.sh
+```
+
+- Run _(TODO: backend should wait for postgres to become ready)_
+
+```sh
+docker-compose -f dc.prod-local.yml up -Vd
+```
