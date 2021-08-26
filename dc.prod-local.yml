@@ -1,7 +1,7 @@
-version: "3.8"
-# This compose file is for dev environment
+version: '3.8'
+# This compose file is for building and running services "like in production" on dev machine.
+# Note: for running existing versions of these services you only need to pull existing images.
 
-# This file is useful for running postgres in dev mode and running postgres in compile time
 services:
   postgres:
     image: postgres:13.4-alpine3.14
@@ -24,6 +24,8 @@ services:
     build:
       context: backend
       dockerfile: Dockerfile.prod
+      args:
+        docker_host_ip: host.docker.internal
     environment:
       - TPG_DB=notepad
       - TPG_USER=admin
@@ -33,15 +35,32 @@ services:
     ports:
       - '8000:8000'
 
+  # backend_artifacts:
+  #   build:
+  #     context: backend
+  #     dockerfile: Dockerfile.prod.backend-artifacts
+  #     args:
+  #       docker_host_ip: host.docker.internal
+
+  # backend:
+  #   # image: ...
+  #   build:
+  #     context: backend
+  #     dockerfile: Dockerfile.prod.server
+  #   environment:
+  #     - TPG_DB=notepad
+  #     - TPG_USER=admin
+  #     - TPG_PASS=admin
+  #     - TPG_HOST=db
+  #     - TPG_PORT=5431
+  #   ports:
+  #     - '8000:8000'
+
   frontend:
-    # image: ...
     build:
       context: frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.prod
     environment:
       - BACKEND_URL=http://localhost:8000
-    volumes:
-      - './frontend:/app'
-      - /app/node_modules/
     ports:
-      - '8080:8080'
+      - '8080:80'

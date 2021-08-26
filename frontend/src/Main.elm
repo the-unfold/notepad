@@ -1,50 +1,103 @@
 module Main exposing (..)
 
 import Browser
-import Element exposing (..)
-import Element.Background as Background
-import Element.Events exposing (onClick)
-import Element.Font as Font
+import Browser.Navigation as BNav
+import Element
 import Html exposing (Html)
-import UI.Button as Button
-import UI.Palette as Palette
+import Message as Msg
+import Notes
+import Packages
+import Page
+import UI.Icon as Icon
+import UI.Link as Link
+import UI.NavigationContainer as Nav
 import UI.RenderConfig as RenderConfig exposing (RenderConfig)
-import UI.Text as Text
-import UI.TextField as TextField
+import Url
+import Url.Parser as Parser exposing (Parser, oneOf, s)
+
+
+type alias TimesGiven =
+    String
+
+
+type Route
+    = Packages
+    | Notes
+
+
+fuckUrlParser : Parser.Parser (TimesGiven -> a) a
+fuckUrlParser =
+    Parser.custom "FUCKSGIVEN" Just
+
+
+parser : Parser (Route -> a) a
+parser =
+    oneOf
+        [ Parser.map Packages (s "packages")
+        , Parser.map Notes (s "notes")
+        ]
 
 
 type alias Model =
-    { email : String }
+    { email : String, navState : Nav.State, currentPage : Page.Page }
 
 
-type Msg
-    = RegisterUserClicked
-    | EmailChanged String
+type alias Flags =
+    { backendUrl : String
+    }
 
 
-main : Program () Model Msg
+main : Program Flags Model Msg.Msg
 main =
-    Browser.element
+    Browser.application
         { init = init
         , subscriptions = always Sub.none
-        , view = view
+        , view = view renderCfg
         , update = update
+        , onUrlChange = Msg.UrlChanged
+        , onUrlRequest = Msg.LinkClicked
         }
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+fromUrl : Url.Url -> Maybe Route
+fromUrl =
+    Parser.parse parser
+
+
+routeToPage : Maybe Route -> Page.Page
+routeToPage route =
+    case route of
+        Just Notes ->
+            Page.Notes
+
+        Just Packages ->
+            Page.Packages
+
+        _ ->
+            Page.Packages
+
+
+updatePageFromUrl : Url.Url -> Model -> Model
+updatePageFromUrl url model =
+    { model | currentPage = (fromUrl >> routeToPage) url }
+
+
+update : Msg.Msg -> Model -> ( Model, Cmd Msg.Msg )
 update msg model =
     case msg of
-        RegisterUserClicked ->
+        Msg.UrlChanged url ->
+            ( updatePageFromUrl url model, Cmd.none )
+
+        Msg.LinkClicked x ->
+            case x of
+                Browser.Internal url ->
+                    ( updatePageFromUrl url model, Cmd.none )
+
+                Browser.External _ ->
+                    ( model, Cmd.none )
+
+        _ ->
             ( model, Cmd.none )
-
-        EmailChanged email ->
-            ( { model | email = email }, Cmd.none )
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { email = "" }, Cmd.none )
 
 
 renderCfg : RenderConfig
@@ -52,19 +105,46 @@ renderCfg =
     RenderConfig.init { width = 1920, height = 1080 } RenderConfig.localeEnglish
 
 
-view : Model -> Html Msg
-view model =
-    Element.layout
-        [ Background.color (rgb255 255 255 255), Font.color (rgb255 0 0 0) ]
-        (column [ width fill, alignTop, padding 10, spacing 20, onClick <| RegisterUserClicked ]
-            [ "Notepad"
-                |> Text.heading1
-                |> Text.withColor (Palette.color Palette.toneGray Palette.brightnessDarkest)
-                |> Text.renderElement renderCfg
-            , TextField.singlelineText EmailChanged "john@galt.com" model.email
-                |> TextField.renderElement renderCfg
-            , Button.fromLabel "Register user"
-                |> Button.cmd RegisterUserClicked Button.primary
-                |> Button.renderElement renderCfg
+init : Flags -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
+init _ _ _ =
+    ( { email = "", navState = Nav.stateInit renderCfg, currentPage = Page.Packages }, Cmd.none )
+
+
+view : RenderConfig -> Model -> { body : List (Html Msg.Msg), title : String }
+view renderConfig { navState, currentPage } =
+    Nav.navigator Msg.NavMsg
+        navState
+        (getPageContainer >> Nav.containerMap Msg.PageMsg)
+        |> Nav.withMenuPages
+            [ Nav.menuPage (Icon.packages "Packages")
+                (Link.link "/note/1")
+                (currentPage == Page.Packages)
+            , Nav.menuPage (Icon.pause "Notes")
+                (Link.link "/notes")
+                (currentPage == Page.Notes)
             ]
-        )
+        |> Nav.withMenuActions
+            [ Nav.menuAction
+                (Icon.logout "Logout")
+                Msg.SessionLogout
+            ]
+        |> Nav.withMenuLogo "My company's logo" (Element.text "Logo")
+        |> Nav.toBrowserDocument renderConfig currentPage
+
+
+getPageContainer : Page.Page -> Nav.Container Page.Msg
+getPageContainer page =
+    case page of
+        Page.Packages ->
+            { title = "Packages"
+            , content = Nav.contentSingle <| Element.map Page.PackagesMsg <| Packages.view renderCfg { email = "" }
+            , dialog = Nothing
+            , hasMenu = True
+            }
+
+        Page.Notes ->
+            { title = "Notes"
+            , content = Nav.contentSingle <| Element.map Page.NotesMsg <| Notes.view renderCfg { notes = [ Notes.Note { id = 1, content = "Fucking note" } ] }
+            , dialog = Nothing
+            , hasMenu = True
+            }

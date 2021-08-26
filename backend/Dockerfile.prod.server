@@ -1,0 +1,9 @@
+FROM backend_artifacts as builder
+
+# Store server binary in a "blank" container
+FROM ubuntu:21.04
+COPY --from=builder /root/.local/bin/server /app/server
+
+EXPOSE 8000
+
+CMD ["/app/server"]
