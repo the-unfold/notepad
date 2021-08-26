@@ -80,7 +80,7 @@ handleRequests :: TBChan () -> IO ()
 handleRequests chan =
   do
     spockCfg <- defaultSpockCfg EmptySession PCNoDatabase ()
-    runSpock 8080 (spock spockCfg $ app chan)
+    runSpock 8000 (spock spockCfg $ app chan)
 
 app :: TBChan () -> SpockM () MySession () ()
 app chan = prehook initHook $ do

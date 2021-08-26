@@ -16,12 +16,25 @@ type Note
 
 
 type alias Model =
-    { notes : List Note }
+    { selectedId : Maybe Int, notes : List Note }
+
+
+init : () -> Model
+init _ =
+    { selectedId = Nothing
+    , notes = [ Note { id = 1, content = "Fucking note" } ]
+    }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update (NoteClicked noteId) model =
+    ( { model | selectedId = Just noteId }, Cmd.none )
 
 
 view : RenderConfig -> Model -> Element Msg
 view renderConfig model =
     let
+        viewNote : Note -> Element Msg
         viewNote (Note note) =
             row [ width fill, onClick <| NoteClicked note.id ]
                 [ note.content
