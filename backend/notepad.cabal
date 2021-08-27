@@ -89,6 +89,7 @@ common deps
     -Wno-implicit-prelude
     -Wno-missed-specialisations
     -Wno-missing-local-signatures
+    -Wno-missing-export-lists
     -Wno-unsafe
     -Wno-missing-safe-haskell-mode
     -Wno-unused-packages
