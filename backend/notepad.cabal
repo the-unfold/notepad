@@ -34,8 +34,6 @@ common deps
     , containers 
     -- for compile-time typeckecking against real postgres DB
     , postgresql-typed 
-    -- for configuring postgres connection
-    , network 
     -- for efficient strings
     , text 
     -- for monad transformers in general
@@ -92,7 +90,6 @@ common deps
     -Wno-missing-export-lists
     -Wno-unsafe
     -Wno-missing-safe-haskell-mode
-    -Wno-unused-packages
     -- Temporarily disabled warnings which need to be fixed eventually
     -- It is inconvenient to specify imports for all record fields and all value constructors 
     -- We need to find a better way.
