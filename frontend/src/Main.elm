@@ -3,6 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as BNav
 import Element
+import Flags exposing (Flags)
 import Html exposing (Html)
 import Message as Msg
 import Notes
@@ -39,11 +40,12 @@ parser =
 
 
 type alias Model =
-    { email : String, navState : Nav.State, currentPage : Page.Page }
-
-
-type alias Flags =
-    { backendUrl : String
+    { email : String
+    , navState : Nav.State
+    , currentPage : Page.Page
+    , packagesModel : Packages.Model
+    , notesModel : Notes.Model
+    , flags : Flags
     }
 
 
@@ -96,6 +98,27 @@ update msg model =
                 Browser.External _ ->
                     ( model, Cmd.none )
 
+        Msg.NavMsg navMsg ->
+            let
+                ( newNavState, navCommand ) =
+                    Nav.stateUpdate navMsg model.navState
+            in
+            ( { model | navState = newNavState }, Cmd.map Msg.NavMsg navCommand )
+
+        Msg.PageMsg (Page.PackagesMsg packagesMsg) ->
+            let
+                ( newPackagesModel, packagesCommand ) =
+                    Packages.update packagesMsg model.packagesModel
+            in
+            ( { model | packagesModel = newPackagesModel }, Cmd.map (Page.PackagesMsg >> Msg.PageMsg) packagesCommand )
+
+        Msg.PageMsg (Page.NotesMsg notesMsg) ->
+            let
+                ( newNotesModel, notesCommand ) =
+                    Notes.update notesMsg model.notesModel
+            in
+            ( { model | notesModel = newNotesModel }, Cmd.map (Page.NotesMsg >> Msg.PageMsg) notesCommand )
+
         _ ->
             ( model, Cmd.none )
 
@@ -106,22 +129,30 @@ renderCfg =
 
 
 init : Flags -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
-init _ _ _ =
-    ( { email = "", navState = Nav.stateInit renderCfg, currentPage = Page.Packages }, Cmd.none )
+init flags _ _ =
+    ( { email = ""
+      , navState = Nav.stateInit renderCfg
+      , currentPage = Page.Packages
+      , packagesModel = Packages.init flags
+      , notesModel = Notes.init ()
+      , flags = flags
+      }
+    , Cmd.none
+    )
 
 
 view : RenderConfig -> Model -> { body : List (Html Msg.Msg), title : String }
-view renderConfig { navState, currentPage } =
+view renderConfig model =
     Nav.navigator Msg.NavMsg
-        navState
-        (getPageContainer >> Nav.containerMap Msg.PageMsg)
+        model.navState
+        (getPageContainer model >> Nav.containerMap Msg.PageMsg)
         |> Nav.withMenuPages
             [ Nav.menuPage (Icon.packages "Packages")
                 (Link.link "/note/1")
-                (currentPage == Page.Packages)
+                (model.currentPage == Page.Packages)
             , Nav.menuPage (Icon.pause "Notes")
                 (Link.link "/notes")
-                (currentPage == Page.Notes)
+                (model.currentPage == Page.Notes)
             ]
         |> Nav.withMenuActions
             [ Nav.menuAction
@@ -129,22 +160,22 @@ view renderConfig { navState, currentPage } =
                 Msg.SessionLogout
             ]
         |> Nav.withMenuLogo "My company's logo" (Element.text "Logo")
-        |> Nav.toBrowserDocument renderConfig currentPage
+        |> Nav.toBrowserDocument renderConfig model.currentPage
 
 
-getPageContainer : Page.Page -> Nav.Container Page.Msg
-getPageContainer page =
+getPageContainer : Model -> Page.Page -> Nav.Container Page.Msg
+getPageContainer model page =
     case page of
         Page.Packages ->
             { title = "Packages"
-            , content = Nav.contentSingle <| Element.map Page.PackagesMsg <| Packages.view renderCfg { email = "" }
+            , content = Nav.contentSingle <| Element.map Page.PackagesMsg <| Packages.view renderCfg model.packagesModel
             , dialog = Nothing
             , hasMenu = True
             }
 
         Page.Notes ->
             { title = "Notes"
-            , content = Nav.contentSingle <| Element.map Page.NotesMsg <| Notes.view renderCfg { notes = [ Notes.Note { id = 1, content = "Fucking note" } ] }
+            , content = Nav.contentSingle <| Element.map Page.NotesMsg <| Notes.view renderCfg model.notesModel
             , dialog = Nothing
             , hasMenu = True
             }

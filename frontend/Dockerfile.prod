@@ -36,7 +36,7 @@ RUN elm-format --validate .
 RUN npm run test
 
 # Run code review
-# RUN npm run review
+RUN npm run review
 
 # Compile Elm code
 RUN elm make --optimize --output="./bundle.uncompressed.js" src/Main.elm
