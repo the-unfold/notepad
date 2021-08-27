@@ -13,7 +13,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as TIO
 import Data.Text.Prettyprint.Doc (Doc)
 import Data.Text.Prettyprint.Doc.Render.Text (hPutDoc)
-import HttpServer (typeDefinitions)
+import HttpTypes (typeDefinitions)
 import Language.Elm.Name (Module)
 import Language.Elm.Pretty qualified as Pretty
 import Language.Elm.Simplification qualified as Simplification

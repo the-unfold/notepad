@@ -21,6 +21,14 @@ common deps
   build-depends:
       base >= 4.7 && < 5
     -- http server
+    , servant-server
+    -- for CORS (for http server)
+    , wai-cors
+    -- for request logger (for http server)
+    , wai-extra
+    -- for running servant Application (for http server)
+    , warp
+    -- http server TODO: remove
     , Spock >= 0.14 
     -- for extracting postgres error messages
     , bytestring 
@@ -80,8 +88,8 @@ common deps
     -- TODO: clarify meaning
     -with-rtsopts=-N
     -- Enable all possible warnings as errors
-    -Werror
-    -Weverything
+    -- -Werror
+    -- -Weverything
     -- Intentionally ignore some warnings
     -Wno-all-missed-specialisations
     -Wno-implicit-prelude
@@ -112,6 +120,7 @@ executable server
     EventProcessor
     EventRegistrator
     HttpServer
+    HttpTypes
 
 executable codegen
   import:              deps
@@ -126,3 +135,4 @@ executable codegen
     EventProcessor
     EventRegistrator
     HttpServer
+    HttpTypes
