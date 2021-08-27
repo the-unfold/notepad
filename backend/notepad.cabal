@@ -21,27 +21,27 @@ common deps
   build-depends:
       base >= 4.7 && < 5
     -- http server
-    , Spock >= 0.14 
+    , servant-server
+    -- for CORS (for http server)
+    , wai-cors
+    -- for request logger (for http server)
+    , wai-extra
+    -- for running servant Application (for http server)
+    , warp
     -- for extracting postgres error messages
     , bytestring 
     -- for Data.Map (for extracting postgres error messages)
     , containers 
     -- for compile-time typeckecking against real postgres DB
     , postgresql-typed 
-    -- for configuring postgres connection
-    , network 
     -- for efficient strings
     , text 
     -- for monad transformers in general
     , mtl 
     -- for JSON
     , aeson 
-    -- for specifying status codes for HTTP responses
-    , http-types 
     -- for UUIDs
     , uuid 
-    -- for specifying types for http request hooks
-    , hvect 
     -- for composing strings
     , fmt 
     -- for subscribing to new events
@@ -87,9 +87,9 @@ common deps
     -Wno-implicit-prelude
     -Wno-missed-specialisations
     -Wno-missing-local-signatures
+    -Wno-missing-export-lists
     -Wno-unsafe
     -Wno-missing-safe-haskell-mode
-    -Wno-unused-packages
     -- Temporarily disabled warnings which need to be fixed eventually
     -- It is inconvenient to specify imports for all record fields and all value constructors 
     -- We need to find a better way.
@@ -112,6 +112,8 @@ executable server
     EventProcessor
     EventRegistrator
     HttpServer
+    HttpTypes
+    Queries
 
 executable codegen
   import:              deps
@@ -126,3 +128,5 @@ executable codegen
     EventProcessor
     EventRegistrator
     HttpServer
+    HttpTypes
+    Queries

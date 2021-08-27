@@ -1,11 +1,11 @@
 module Main (main) where
 
-import Utils.Concurrency
 import Control.Concurrent (newMVar)
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBChan (newTBChan)
 import EventProcessor (processEventsInLoop)
 import HttpServer (handleRequests)
+import Utils.Concurrency
 
 main :: IO ()
 main = do

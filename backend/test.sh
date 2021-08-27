@@ -1,5 +1,7 @@
+set -e
+
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com" },
@@ -7,7 +9,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/notes/create \
+  --url http://localhost:8000/notes/create \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "content": "I am a simple note" },
@@ -15,7 +17,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/notes/create \
+  --url http://localhost:8000/notes/create \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "content": "I am a simple note 2" },
@@ -24,7 +26,7 @@ curl --request POST \
 
 #  Bonus users
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com0" },
@@ -32,7 +34,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com1" },
@@ -40,7 +42,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com2" },
@@ -48,7 +50,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com3" },
@@ -56,7 +58,7 @@ curl --request POST \
     }'
 
 curl --request POST \
-  --url http://localhost:8080/users \
+  --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
       "payload": { "email": "john@galt.com4" },

@@ -17,10 +17,10 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-# TODO: We can't use GHC 9 bacause Spock doesn't work with it. 
-# It is updated too infrequently.
-# Time to switch to Servant
-resolver: lts-18.7
+
+# Note: before upgrading to a new snapshot with a different GHC version, 
+# check if vscode-haskell supports it: https://github.com/haskell/vscode-haskell#supported-ghc-versions
+resolver: lts-18.6
 
 # Not a good practice really
 allow-newer: true
@@ -47,11 +47,6 @@ packages:
 #
 # extra-deps: []
 extra-deps:
-  - Spock-0.14.0.0
-  - Spock-core-0.14.0.0
-  - reroute-0.6.0.0
-  - stm-containers-1.2
-  - stm-hamt-1.2.0.6
   - elm-syntax-0.3.1.0
   - haskell-to-elm-0.3.2.0
 # Override default flag values for local packages and extra-deps
