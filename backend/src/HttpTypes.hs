@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 
-module HttpTypes (typeDefinitions) where
+module HttpTypes where
 
 import Data.Aeson qualified as Aeson
 import Data.Text (Text)
@@ -13,6 +13,7 @@ import Generics.SOP qualified as SOP
 import GHC.Generics (Generic)
 import Language.Elm.Definition (Definition)
 import Language.Haskell.To.Elm qualified as E
+import Data.Int (Int32)
 
 -- |
 -- List of type definitions to be written to .elm files
@@ -22,22 +23,34 @@ import Language.Haskell.To.Elm qualified as E
 typeDefinitions :: [Definition]
 typeDefinitions =
   concat
-    [ E.jsonDefinitions @RegisterUserPayload,
-      E.jsonDefinitions @NoteAddedPayload
+    [ E.jsonDefinitions @UserRegisterPayload,
+      E.jsonDefinitions @Note
     ]
 
 data WithUuid a = WithUuid {payload :: a, uuid :: UUID.UUID}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
 
-newtype RegisterUserPayload = RegisterUserPayload {email :: Text}
+newtype UserRegisterPayload = UserRegisterPayload {email :: Text}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
   deriving (E.HasElmType, E.HasElmDecoder Aeson.Value, E.HasElmEncoder Aeson.Value)
-    via ElmType "Api.RegisterUserPayload.RegisterUserPayload" RegisterUserPayload
+    via ElmType "Api.UserRegisterPayload.UserRegisterPayload" UserRegisterPayload
 
-newtype NoteAddedPayload = NoteAddedPayload {content :: Text}
+newtype NoteCreatePayload = NoteCreatePayload {content :: Text}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
   deriving (E.HasElmType, E.HasElmDecoder Aeson.Value, E.HasElmEncoder Aeson.Value)
-    via ElmType "Api.NoteAddedPayload.NoteAddedPayload" NoteAddedPayload
+    via ElmType "Api.NoteAddedPayload.NoteAddedPayload" NoteCreatePayload
+
+data NoteUpdatePayload = NoteUpdatePayload {noteId :: Int32, content :: Text}
+  deriving stock (Eq, Show, Read, Generic)
+  deriving anyclass (Aeson.ToJSON, Aeson.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
+  deriving (E.HasElmType, E.HasElmDecoder Aeson.Value, E.HasElmEncoder Aeson.Value)
+    via ElmType "Api.NoteAddedPayload.NoteAddedPayload" NoteUpdatePayload
+
+data Note = Note {noteId :: Int32, content :: Text}
+  deriving stock (Eq, Show, Read, Generic)
+  deriving anyclass (Aeson.ToJSON, Aeson.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
+  deriving (E.HasElmType, E.HasElmDecoder Aeson.Value, E.HasElmEncoder Aeson.Value)
+    via ElmType "Api.Note.Note" Note

@@ -28,8 +28,6 @@ common deps
     , wai-extra
     -- for running servant Application (for http server)
     , warp
-    -- http server TODO: remove
-    , Spock >= 0.14 
     -- for extracting postgres error messages
     , bytestring 
     -- for Data.Map (for extracting postgres error messages)
@@ -44,12 +42,8 @@ common deps
     , mtl 
     -- for JSON
     , aeson 
-    -- for specifying status codes for HTTP responses
-    , http-types 
     -- for UUIDs
     , uuid 
-    -- for specifying types for http request hooks
-    , hvect 
     -- for composing strings
     , fmt 
     -- for subscribing to new events
@@ -88,8 +82,8 @@ common deps
     -- TODO: clarify meaning
     -with-rtsopts=-N
     -- Enable all possible warnings as errors
-    -- -Werror
-    -- -Weverything
+    -Werror
+    -Weverything
     -- Intentionally ignore some warnings
     -Wno-all-missed-specialisations
     -Wno-implicit-prelude
@@ -121,6 +115,7 @@ executable server
     EventRegistrator
     HttpServer
     HttpTypes
+    Queries
 
 executable codegen
   import:              deps
@@ -136,3 +131,4 @@ executable codegen
     EventRegistrator
     HttpServer
     HttpTypes
+    Queries

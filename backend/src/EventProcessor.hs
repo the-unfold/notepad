@@ -45,7 +45,7 @@ processEvent UserRegistered {email} = do
         | otherwise = InternalProcessingError
   withExceptT transformError . ExceptT . try $
     runQueryWithNewConnection_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
-processEvent NoteAdded {userId, content} = do
+processEvent NoteCreated {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
   let transformError :: PGError -> ProcessingError
       transformError _err = InternalProcessingError
