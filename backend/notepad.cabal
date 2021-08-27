@@ -107,6 +107,9 @@ executable server
     Utils.Concurrency
     Utils.ElmDeriving
     Utils.Codegen
+    Types.WithUuid
+    Types.Uuid
+    Types.Either
     Database
     DomainEvent
     EventProcessor
@@ -115,18 +118,18 @@ executable server
     HttpTypes
     Queries
 
+
 executable codegen
   import:              deps
   hs-source-dirs:      src
   main-is:             CodegenMain.hs
+  ghc-options:
+    -- Allow unused packages only in codegen (false positive: they are likely to be used by server)
+    -Wno-unused-packages
   other-modules:       
-    Utils.Concurrency
     Utils.ElmDeriving
     Utils.Codegen
-    Database
-    DomainEvent
-    EventProcessor
-    EventRegistrator
-    HttpServer
+    Types.WithUuid
+    Types.Either
+    Types.Uuid
     HttpTypes
-    Queries

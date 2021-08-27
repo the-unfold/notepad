@@ -13,6 +13,7 @@ import Network.Wai.Middleware.Cors (cors, corsRequestHeaders, simpleCorsResource
 import Network.Wai.Middleware.RequestLogger (logStdoutDev)
 import Queries qualified
 import Servant
+import Types.WithUuid
 
 handleRequests :: TBChan () -> IO ()
 handleRequests chan = do
