@@ -1,4 +1,4 @@
-FROM backend_artifacts as builder
+FROM notepad_backend-artifacts as builder
 
 # Store server binary in a "blank" container
 FROM ubuntu:21.04
