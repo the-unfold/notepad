@@ -1,7 +1,7 @@
 module Packages exposing (..)
 
-import Api.NoteAddedPayload exposing (NoteAddedPayload, noteAddedPayloadEncoder)
-import Api.RegisterUserPayload exposing (RegisterUserPayload, registerUserPayloadEncoder)
+import Api.NoteCreatePayload exposing (NoteCreatePayload, noteCreatePayloadEncoder)
+import Api.UserRegisterPayload exposing (UserRegisterPayload, userRegisterPayloadEncoder)
 import Element exposing (..)
 import Element.Events exposing (onClick)
 import Flags exposing (Flags)
@@ -31,25 +31,25 @@ init flags =
     { email = "", flags = flags }
 
 
-registerUser : Flags -> RegisterUserPayload -> Cmd Msg
-registerUser flags registerUserPayload =
+registerUser : Flags -> UserRegisterPayload -> Cmd Msg
+registerUser flags userRegisterPayload =
     Http.post
         { url = flags.backendUrl ++ "/users"
         , body =
-            registerUserPayload
-                |> encodeWithUuid registerUserPayloadEncoder "550e8400-e29b-41d4-a726-446655440043"
+            userRegisterPayload
+                |> encodeWithUuid userRegisterPayloadEncoder "550e8400-e29b-41d4-a726-446655440043"
                 |> Http.jsonBody
         , expect = Http.expectWhatever (always GotRegisterUserResult)
         }
 
 
-addNote : Flags -> NoteAddedPayload -> Cmd Msg
-addNote flags noteAddedPayload =
+addNote : Flags -> NoteCreatePayload -> Cmd Msg
+addNote flags noteCreatePayload =
     Http.post
         { url = flags.backendUrl ++ "/notes/create"
         , body =
-            noteAddedPayload
-                |> encodeWithUuid noteAddedPayloadEncoder "550e8400-e29b-41d4-a726-446655440042"
+            noteCreatePayload
+                |> encodeWithUuid noteCreatePayloadEncoder "550e8400-e29b-41d4-a726-446655440042"
                 |> Http.jsonBody
         , expect = Http.expectWhatever (always GotAddNoteResult)
         }
