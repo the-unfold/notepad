@@ -19,13 +19,18 @@ services:
       POSTGRES_DB: notepad
     command: ["postgres", "-c", "log_statement=all"]
 
-  backend:
-    # image: ...
+  backend-artifacts:
     build:
       context: backend
-      dockerfile: Dockerfile.prod
+      dockerfile: Dockerfile.prod.backend-artifacts
       args:
         docker_host_ip: host.docker.internal
+
+  backend:
+    image: the-unfold/notepad-backend:latest-dev
+    build:
+      context: backend
+      dockerfile: Dockerfile.prod.server
     environment:
       - TPG_DB=notepad
       - TPG_USER=admin
@@ -35,28 +40,8 @@ services:
     ports:
       - '8000:8000'
 
-  # backend_artifacts:
-  #   build:
-  #     context: backend
-  #     dockerfile: Dockerfile.prod.backend-artifacts
-  #     args:
-  #       docker_host_ip: host.docker.internal
-
-  # backend:
-  #   # image: ...
-  #   build:
-  #     context: backend
-  #     dockerfile: Dockerfile.prod.server
-  #   environment:
-  #     - TPG_DB=notepad
-  #     - TPG_USER=admin
-  #     - TPG_PASS=admin
-  #     - TPG_HOST=db
-  #     - TPG_PORT=5431
-  #   ports:
-  #     - '8000:8000'
-
   frontend:
+    image: the-unfold/notepad-frontend:latest-dev
     build:
       context: frontend
       dockerfile: Dockerfile.prod

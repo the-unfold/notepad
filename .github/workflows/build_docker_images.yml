@@ -28,20 +28,41 @@ jobs:
           - 5431:5432
 
     steps:
+      - name: Install postgresql-client
+        # docker/compose doesn't have postgresql client by default
+        run: apk add --no-cache postgresql-client
+
+      - name: Install tar
+        # docker/compose ships with a very limited version of tar, which is incompatible with actions/cache
+        run: apk add --no-cache tar
+
       - uses: actions/checkout@v2
 
+      - name: Stack cache
+        # Stack dependencies are compressed and copied from the build container.
+        # See Dockerfiles for the details
+        uses: actions/cache@v2
+        with:
+          path: backend/cache
+          key: notepad.stack_dependencies
+          restore-keys: notepad.stack_dependencies
+
       - name: Apply migrations
-        run: |
-          apk update
-          apk add postgresql-client
-          export PGPASSWORD=admin; psql -h postgres -p 5432 -U admin -d notepad -f postgres/1.init.sql
+        # postgresql-typed checks the backend against the database at compile time.
+        # We needf database schema to be exactly the same as in production, but we don't need the data.
+        # That's why applying migrations is enough.
+        run: export PGPASSWORD=admin; psql -h postgres -p 5432 -U admin -d notepad -f postgres/1.init.sql
 
       - name: Build backend image
         run: |
-          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend
-          # TODO: docker-compose -f dc.prod-github-actions.yml push backend
+          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend-artifacts
 
-      # ... Upcoming condegen changes ...
+          id=$(docker create notepad_backend-artifacts)
+          docker cp $id:/root/stack_dependencies_cache.tar.gz - > ./backend/cache/stack_dependencies_cache.tar.gz.tar
+          docker rm -v $id
+
+          docker-compose -f dc.prod-local.yml build backend
+          # TODO: docker-compose -f dc.prod-github-actions.yml push backend
 
       - name: Build frontend image
         run: |

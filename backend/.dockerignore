@@ -7,6 +7,9 @@
 !/stack.yaml
 !/stack.yaml.lock
 !/notepad.cabal
+!/cache/stack_dependencies_cache.tar.gz.tar
+# Avoid failures in docker image builder when cache is clean - copy at least this empty file
+!/cache/.gitkeep
 
 # Ignore unnecessary files inside allowed directories
 **/.DS_Store
