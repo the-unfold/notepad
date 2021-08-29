@@ -32,7 +32,7 @@ import NoUnused.Parameters
 import NoUnused.Patterns
 import NoUnused.Variables
 import NoUselessSubscriptions
-import Review.Rule exposing (Rule)
+import Review.Rule as Rule exposing (Rule)
 import Simplify
 
 
@@ -62,3 +62,4 @@ config =
     , NoPrematureLetComputation.rule
     , NoSimpleLetBody.rule
     ]
+        |> List.map (Rule.ignoreErrorsForDirectories [ "src/Api/" ])

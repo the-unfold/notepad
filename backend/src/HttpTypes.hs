@@ -25,6 +25,8 @@ typeDefinitions :: [Definition]
 typeDefinitions =
   concat
     [ E.jsonDefinitions @UserRegisterPayload,
+      E.jsonDefinitions @NoteCreatePayload,
+      E.jsonDefinitions @NoteUpdatePayload,
       E.jsonDefinitions @Note,
       E.jsonDefinitions @Either,
       E.jsonDefinitions @WithUuid
@@ -42,14 +44,14 @@ newtype NoteCreatePayload = NoteCreatePayload {content :: Text}
   deriving anyclass (A.ToJSON, A.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
   deriving
     (E.HasElmType, E.HasElmDecoder A.Value, E.HasElmEncoder A.Value)
-    via ElmType "Api.NoteAddedPayload.NoteAddedPayload" NoteCreatePayload
+    via ElmType "Api.NoteCreatePayload.NoteCreatePayload" NoteCreatePayload
 
 data NoteUpdatePayload = NoteUpdatePayload {noteId :: Int32, content :: Text}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (A.ToJSON, A.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
   deriving
     (E.HasElmType, E.HasElmDecoder A.Value, E.HasElmEncoder A.Value)
-    via ElmType "Api.NoteAddedPayload.NoteAddedPayload" NoteUpdatePayload
+    via ElmType "Api.NoteUpdatePayload.NoteUpdatePayload" NoteUpdatePayload
 
 data Note = Note {noteId :: Int32, content :: Text}
   deriving stock (Eq, Show, Read, Generic)
