@@ -13,13 +13,25 @@ docker-compose -f dc.prod-local.yml up -Vd postgres
 # Build backend-artifacts
 docker-compose -f dc.prod-local.yml build backend-artifacts
 
+# Create container from image without running it to extract artifacts
+id=$(docker create notepad_backend-artifacts)
+
 # Save stack depenencies cache
 # TODO: check md5 sum before extracting 
 # to avoid copying the same archive to the host again (useful only for frequent local docker builds)
-id=$(docker create notepad_backend-artifacts)
 docker cp $id:/root/stack_dependencies_cache.tar.gz - > ./backend/cache/stack_dependencies_cache.tar.gz.tar
-docker rm -v $id
 
+# Replace the existing generated code with just generated
+# Note: we could also do it via docker, 
+# but it will require anyone to build backend-artifacts before building the frontend
+# which will take 20-40 minutes.
+rm -rf frontend/src/Api
+docker cp $id:/frontend/src/Api - > frontend/src/Api.tar
+tar -xf frontend/src/Api.tar -C frontend/src
+rm frontend/src/Api.tar
+
+# Remove the container after extracting artifacts
+docker rm -v $id
 
 # Build backend
 docker-compose -f dc.prod-local.yml build backend

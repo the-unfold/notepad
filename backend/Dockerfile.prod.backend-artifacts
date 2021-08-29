@@ -9,6 +9,11 @@ FROM fpco/stack-build:lts-18.6
 RUN apt-get update
 RUN apt-get install pigz
 
+# Install Elm-format to format the generated output (standalone is more reliable and compatible, than NPM version)
+RUN curl -L -o elm-format.tgz https://github.com/avh4/elm-format/releases/download/0.8.5/elm-format-0.8.5-linux-x64.tgz
+RUN tar -xzf elm-format.tgz
+RUN chmod +x elm-format
+RUN mv elm-format /usr/local/bin/
 
 # Copy and extract stack dependencies cache (if we have it)
 WORKDIR /root
@@ -44,6 +49,6 @@ RUN stack build --copy-bins
 # Generate Elm code
 RUN stack run codegen
 
-# Compress stack dependencies cache
+# Compress stack dependencies cache 2
 WORKDIR /root
 RUN tar -c -Ipigz -f stack_dependencies_cache.tar.gz .stack

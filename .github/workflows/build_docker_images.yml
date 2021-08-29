@@ -57,8 +57,22 @@ jobs:
         run: |
           docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend-artifacts
 
+            # Create container from image without running it to extract artifacts
           id=$(docker create notepad_backend-artifacts)
+
+            # Save stack depenencies cache
           docker cp $id:/root/stack_dependencies_cache.tar.gz - > ./backend/cache/stack_dependencies_cache.tar.gz.tar
+
+            # Replace the existing generated code with just generated
+            # Note: we could also do it via docker, 
+            # but it will require anyone to build backend-artifacts before building the frontend
+            # which will take 20-40 minutes.
+          rm -rf frontend/src/Api
+          docker cp $id:/frontend/src/Api - > frontend/src/Api.tar
+          tar -xf frontend/src/Api.tar -C frontend/src
+          rm frontend/src/Api.tar
+
+            # Remove the container after extracting artifacts
           docker rm -v $id
 
           docker-compose -f dc.prod-local.yml build backend
