@@ -1,14 +1,14 @@
 module Page exposing (..)
 
 import Notes
-import Packages
+import Users
 
 
 type Page
-    = Packages -- Packages.Model
+    = Users -- Users.Model
     | Notes -- Fuck.Model
 
 
 type Msg
-    = PackagesMsg Packages.Msg
+    = UsersMsg Users.Msg
     | NotesMsg Notes.Msg

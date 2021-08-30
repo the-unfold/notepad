@@ -50,7 +50,7 @@ processEvent NoteCreated {userId, content} = do
   let transformError :: PGError -> ProcessingError
       transformError _err = InternalProcessingError
       maxNotesPerUser :: Int64
-      maxNotesPerUser = 2
+      maxNotesPerUser = 64
   [Just notesCount] <- withExceptT transformError . ExceptT . try $ do
     runQueryWithNewConnection [pgSQL| SELECT count(note_id) FROM notes WHERE user_id = ${userId}; |] :: IO [Maybe Int64]
   liftIO $ fmtLn $ "notesCount: " +| notesCount |+ ""
@@ -101,9 +101,11 @@ processEventsInLoop chan = do
       [pgSQL| 
     SELECT event_id, uuid, body, is_first
     FROM (
-        SELECT e.event_id, uuid, body, FALSE as is_first
+        (SELECT e.event_id, uuid, body, FALSE as is_first
         FROM events e, last_processed_event
-        WHERE e.event_id = last_processed_event.event_id + 1 AND EXISTS (SELECT 1 FROM last_processed_event )
+        WHERE e.event_id > last_processed_event.event_id AND EXISTS (SELECT 1 FROM last_processed_event)
+        ORDER BY e.event_id ASC
+        LIMIT 1)
       UNION
         SELECT e.event_id, uuid, body, TRUE as is_first
         FROM events e

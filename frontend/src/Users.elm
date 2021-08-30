@@ -1,6 +1,5 @@
-module Packages exposing (..)
+module Users exposing (..)
 
-import Api.NoteCreatePayload exposing (NoteCreatePayload, noteCreatePayloadEncoder)
 import Api.UserRegisterPayload exposing (UserRegisterPayload, userRegisterPayloadEncoder)
 import Element exposing (..)
 import Element.Events exposing (onClick)
@@ -17,8 +16,6 @@ import WithUuid exposing (encodeWithUuid)
 type Msg
     = RegisterUserClicked
     | GotRegisterUserResult
-    | AddNoteClicked
-    | GotAddNoteResult
     | EmailChanged String
 
 
@@ -43,18 +40,6 @@ registerUser flags userRegisterPayload =
         }
 
 
-addNote : Flags -> NoteCreatePayload -> Cmd Msg
-addNote flags noteCreatePayload =
-    Http.post
-        { url = flags.backendUrl ++ "/notes/create"
-        , body =
-            noteCreatePayload
-                |> encodeWithUuid noteCreatePayloadEncoder "550e8400-e29b-41d4-a726-446655440042"
-                |> Http.jsonBody
-        , expect = Http.expectWhatever (always GotAddNoteResult)
-        }
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -62,12 +47,6 @@ update msg model =
             ( model, registerUser model.flags { email = model.email } )
 
         GotRegisterUserResult ->
-            ( model, Cmd.none )
-
-        AddNoteClicked ->
-            ( model, addNote model.flags { content = "model.note_content" } )
-
-        GotAddNoteResult ->
             ( model, Cmd.none )
 
         EmailChanged email ->
@@ -85,8 +64,5 @@ view renderConfig model =
             |> TextField.renderElement renderConfig
         , Button.fromLabel "Register user"
             |> Button.cmd RegisterUserClicked Button.primary
-            |> Button.renderElement renderConfig
-        , Button.fromLabel "Add note"
-            |> Button.cmd AddNoteClicked Button.primary
             |> Button.renderElement renderConfig
         ]

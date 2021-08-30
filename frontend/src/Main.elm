@@ -7,7 +7,6 @@ import Flags exposing (Flags)
 import Html exposing (Html)
 import Message as Msg
 import Notes
-import Packages
 import Page
 import UI.Icon as Icon
 import UI.Link as Link
@@ -15,6 +14,7 @@ import UI.NavigationContainer as Nav
 import UI.RenderConfig as RenderConfig exposing (RenderConfig)
 import Url
 import Url.Parser as Parser exposing (Parser, oneOf, s)
+import Users
 
 
 type alias TimesGiven =
@@ -22,7 +22,7 @@ type alias TimesGiven =
 
 
 type Route
-    = Packages
+    = Users
     | Notes
 
 
@@ -34,7 +34,7 @@ fuckUrlParser =
 parser : Parser (Route -> a) a
 parser =
     oneOf
-        [ Parser.map Packages (s "packages")
+        [ Parser.map Users (s "users")
         , Parser.map Notes (s "notes")
         ]
 
@@ -43,7 +43,7 @@ type alias Model =
     { email : String
     , navState : Nav.State
     , currentPage : Page.Page
-    , packagesModel : Packages.Model
+    , usersModel : Users.Model
     , notesModel : Notes.Model
     , flags : Flags
     }
@@ -72,11 +72,11 @@ routeToPage route =
         Just Notes ->
             Page.Notes
 
-        Just Packages ->
-            Page.Packages
+        Just Users ->
+            Page.Users
 
         _ ->
-            Page.Packages
+            Page.Users
 
 
 updatePageFromUrl : Url.Url -> Model -> Model
@@ -105,17 +105,17 @@ update msg model =
             in
             ( { model | navState = newNavState }, Cmd.map Msg.NavMsg navCommand )
 
-        Msg.PageMsg (Page.PackagesMsg packagesMsg) ->
+        Msg.PageMsg (Page.UsersMsg usersMsg) ->
             let
-                ( newPackagesModel, packagesCommand ) =
-                    Packages.update packagesMsg model.packagesModel
+                ( newUsersModel, usersCmd ) =
+                    Users.update usersMsg model.usersModel
             in
-            ( { model | packagesModel = newPackagesModel }, Cmd.map (Page.PackagesMsg >> Msg.PageMsg) packagesCommand )
+            ( { model | usersModel = newUsersModel }, Cmd.map (Page.UsersMsg >> Msg.PageMsg) usersCmd )
 
         Msg.PageMsg (Page.NotesMsg notesMsg) ->
             let
                 ( newNotesModel, notesCommand ) =
-                    Notes.update notesMsg model.notesModel
+                    Notes.update model.flags notesMsg model.notesModel
             in
             ( { model | notesModel = newNotesModel }, Cmd.map (Page.NotesMsg >> Msg.PageMsg) notesCommand )
 
@@ -130,14 +130,18 @@ renderCfg =
 
 init : Flags -> Url.Url -> BNav.Key -> ( Model, Cmd Msg.Msg )
 init flags _ _ =
+    let
+        ( notesModel, notesCmd ) =
+            Notes.init flags
+    in
     ( { email = ""
       , navState = Nav.stateInit renderCfg
-      , currentPage = Page.Packages
-      , packagesModel = Packages.init flags
-      , notesModel = Notes.init ()
+      , currentPage = Page.Users
+      , usersModel = Users.init flags
+      , notesModel = notesModel
       , flags = flags
       }
-    , Cmd.none
+    , Cmd.map (Msg.PageMsg << Page.NotesMsg) notesCmd
     )
 
 
@@ -147,9 +151,9 @@ view renderConfig model =
         model.navState
         (getPageContainer model >> Nav.containerMap Msg.PageMsg)
         |> Nav.withMenuPages
-            [ Nav.menuPage (Icon.packages "Packages")
+            [ Nav.menuPage (Icon.packages "Users")
                 (Link.link "/note/1")
-                (model.currentPage == Page.Packages)
+                (model.currentPage == Page.Users)
             , Nav.menuPage (Icon.pause "Notes")
                 (Link.link "/notes")
                 (model.currentPage == Page.Notes)
@@ -166,9 +170,9 @@ view renderConfig model =
 getPageContainer : Model -> Page.Page -> Nav.Container Page.Msg
 getPageContainer model page =
     case page of
-        Page.Packages ->
-            { title = "Packages"
-            , content = Nav.contentSingle <| Element.map Page.PackagesMsg <| Packages.view renderCfg model.packagesModel
+        Page.Users ->
+            { title = "Users"
+            , content = Nav.contentSingle <| Element.map Page.UsersMsg <| Users.view renderCfg model.usersModel
             , dialog = Nothing
             , hasMenu = True
             }
