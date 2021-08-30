@@ -1,6 +1,6 @@
 # notepad
 
-A fullstack note keeping application built on Haskell and Elm
+Full-stack note keeping app built with Haskell and Elm
 
 <img src="docs/icon.png" alt="notepad" width="300"/>
 
@@ -57,7 +57,7 @@ npm i
 
 ## Dev workflow with VSCode
 
-- Run VSCode with a special command, opening the project as a multi-root workspace with configured extensions. 
+- Run VSCode with a special command, opening the project as a multi-root workspace with configured extensions.
   - It will probably ask you to install the recommended extensions. Just do it.
   - Then, when running all other commands in vscode terminal, you no longer need to explicitly load env files.
   - Also, when using LiveShare terminal output is visible for all participants, which is really helpful.
@@ -88,6 +88,7 @@ stack build --file-watch
 ```sh
 stack run server
 ```
+
 - Run codegen locally
 
 ```sh
@@ -135,3 +136,9 @@ bash prod-local-build-all.sh
 ```sh
 docker-compose -f dc.prod-local.yml up -Vd
 ```
+
+### Container registry and tags
+
+- For local development we usually pull images with tagged `main` which are automatically created with every commit to `main`, including merged pull requests.
+- For deployment we use images tagged with version number, e.g. `1.2.3`, which are automatically created for every release with tag `v1.2.3`
+- For debugging a teammate's code we use images tagged by sha or by another branch.

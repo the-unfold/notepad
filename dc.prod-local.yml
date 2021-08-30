@@ -19,15 +19,8 @@ services:
       POSTGRES_DB: notepad
     command: ["postgres", "-c", "log_statement=all"]
 
-  backend-artifacts:
-    build:
-      context: backend
-      dockerfile: Dockerfile.prod.backend-artifacts
-      args:
-        docker_host_ip: host.docker.internal
-
   backend:
-    image: the-unfold/notepad-backend:latest-dev
+    image: ghcr.io/the-unfold/notepad-backend:main
     build:
       context: backend
       dockerfile: Dockerfile.prod.server
@@ -41,7 +34,7 @@ services:
       - '8000:8000'
 
   frontend:
-    image: the-unfold/notepad-frontend:latest-dev
+    image: ghcr.io/the-unfold/notepad-frontend:main
     build:
       context: frontend
       dockerfile: Dockerfile.prod

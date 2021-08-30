@@ -1,13 +1,25 @@
 name: build_docker_images
 on: push
 
+env:
+  REGISTRY: ghcr.io
+  # What tags does:
+  # - always tag with sha
+  # - always tag with branch name
+  # - if a release tag is 'v1.0.0', then tag 'latest' and '1.0.0'
+  # More info: https://github.com/docker/metadata-action#tags-input
+  TAGS: |
+    type=sha
+    type=ref,event=branch
+    type=semver,pattern={{major}}.{{minor}}.{{patch}}
+
 jobs:
   main-job:
     name: Build docker images
     runs-on: ubuntu-latest
 
     # We build images from the container to access postgres (to apply migrations)
-    container: docker/compose
+    container: docker
 
     services:
       postgres:
@@ -28,15 +40,30 @@ jobs:
           - 5431:5432
 
     steps:
-      - name: Install postgresql-client
-        # docker/compose doesn't have postgresql client by default
-        run: apk add --no-cache postgresql-client
-
-      - name: Install tar
-        # docker/compose ships with a very limited version of tar, which is incompatible with actions/cache
-        run: apk add --no-cache tar
-
       - uses: actions/checkout@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install some software for workflow container
+        # docker doesn't have postgresql client by default
+        # docker ships with a very limited version of tar, which is incompatible with actions/cache
+        # curl and jq are required to prepare docker buildx 
+        run: apk add --no-cache postgresql-client tar jq curl
+
+      - name: Install Docker buildx
+        # buildx is requred for docker docker/build-push-action.
+        # it is included in the ubuntu-latest virtual machine,
+        # but not included in the `docker` container image, which we use to run the workflow
+        run: |
+          export BUILDX_VERSION=$(curl -s 'https://api.github.com/repos/docker/buildx/releases' | jq -r '.[0].tag_name')
+          mkdir -p /usr/lib/docker/cli-plugins
+          curl -L --output /usr/lib/docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+          chmod a+x /usr/lib/docker/cli-plugins/docker-buildx
 
       - name: Stack cache
         # Stack dependencies are compressed and copied from the build container.
@@ -53,32 +80,53 @@ jobs:
         # That's why applying migrations is enough.
         run: export PGPASSWORD=admin; psql -h postgres -p 5432 -U admin -d notepad -f postgres/1.init.sql
 
-      - name: Build backend image
+      - name: Build backend-artifacts Docker image
+        run: docker build --build-arg docker_host_ip=$(ip route show | awk '/default/ {print $3}') -f backend/Dockerfile.prod.backend-artifacts -t backend-artifacts backend
+
+      - name: Save stack depenencies cache
         run: |
-          docker_host_ip=$(ip route show | awk '/default/ {print $3}') docker-compose -f dc.prod-github-actions.yml build backend-artifacts
-
-            # Create container from image without running it to extract artifacts
-          id=$(docker create notepad_backend-artifacts)
-
-            # Save stack depenencies cache
+          id=$(docker create backend-artifacts)
           docker cp $id:/root/stack_dependencies_cache.tar.gz - > ./backend/cache/stack_dependencies_cache.tar.gz.tar
 
-            # Replace the existing generated code with just generated
-            # Note: we could also do it via docker, 
-            # but it will require anyone to build backend-artifacts before building the frontend
-            # which will take 20-40 minutes.
+      - name: Replace the existing generated code with just generated one
+          # Note: we could also do it via docker, 
+          # but it will require anyone to build backend-artifacts before building the frontend
+          # which will take 20-40 minutes.
+        run: |
+          id=$(docker create backend-artifacts)
           rm -rf frontend/src/Api
           docker cp $id:/frontend/src/Api - > frontend/src/Api.tar
           tar -xf frontend/src/Api.tar -C frontend/src
           rm frontend/src/Api.tar
 
-            # Remove the container after extracting artifacts
-          docker rm -v $id
+      - name: Prepare tags and labels (backend)
+        id: meta-backend
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/the-unfold/notepad-backend
+          tags: ${{ env.TAGS }}
+          
+      - name: Build and push Docker image (backend)
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: backend
+          file: backend/Dockerfile.prod.server
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
 
-          docker-compose -f dc.prod-local.yml build backend
-          # TODO: docker-compose -f dc.prod-github-actions.yml push backend
-
-      - name: Build frontend image
-        run: |
-          docker-compose -f dc.prod-github-actions.yml build frontend
-          # TODO: docker-compose -f dc.prod-github-actions.yml push frontend
+      - name: Prepare tags and labels (frontend)
+        id: meta-frontend
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/the-unfold/notepad-frontend
+          tags: ${{ env.TAGS }}
+          
+      - name: Build and push Docker image (frontend)
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: frontend
+          file: frontend/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
