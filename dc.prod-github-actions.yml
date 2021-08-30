@@ -11,7 +11,7 @@ services:
         - docker_host_ip
 
   backend:
-    image: the-unfold/notepad-backend:latest-dev
+    image: the-unfold/notepad-backend:main
     build:
       context: backend
       dockerfile: Dockerfile.prod.server
