@@ -12,7 +12,6 @@ import UI.Palette as Palette
 import UI.RenderConfig exposing (RenderConfig)
 import UI.Text as Text
 import UI.TextField as TextField
-import Users exposing (Msg(..))
 import WithUuid exposing (encodeWithUuid)
 
 
