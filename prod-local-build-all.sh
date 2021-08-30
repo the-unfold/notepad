@@ -11,10 +11,10 @@ docker-compose -f dc.prod-local.yml pull postgres
 docker-compose -f dc.prod-local.yml up -Vd postgres
 
 # Build backend-artifacts
-docker-compose -f dc.prod-local.yml build backend-artifacts
+docker build --build-arg docker_host_ip=host.docker.internal -f backend/Dockerfile.prod.backend-artifacts -t backend-artifacts backend
 
 # Create container from image without running it to extract artifacts
-id=$(docker create notepad_backend-artifacts)
+id=$(docker create backend-artifacts)
 
 # Save stack depenencies cache
 # TODO: check md5 sum before extracting 
