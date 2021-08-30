@@ -99,11 +99,21 @@ jobs:
           tar -xf frontend/src/Api.tar -C frontend/src
           rm frontend/src/Api.tar
 
-            # Remove the container after extracting artifacts
-          docker rm -v $id
-
-          docker-compose -f dc.prod-local.yml build backend
-          # TODO: docker-compose -f dc.prod-github-actions.yml push backend
+      - name: Prepare tags and labels (backend)
+        id: meta-backend
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/the-unfold/notepad-backend
+          tags: ${{ env.TAGS }}
+          
+      - name: Build and push Docker image (backend)
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: backend
+          file: backend/Dockerfile.prod.server
+          push: true
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
 
       - name: Prepare tags and labels (frontend)
         id: meta-frontend

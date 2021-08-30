@@ -9,15 +9,3 @@ services:
       dockerfile: Dockerfile.prod.backend-artifacts
       args:
         - docker_host_ip
-
-  backend:
-    image: the-unfold/notepad-backend:main
-    build:
-      context: backend
-      dockerfile: Dockerfile.prod.server
-
-  # frontend:
-  #   # image: ...
-  #   build:
-  #     context: frontend
-  #     dockerfile: Dockerfile.prod
