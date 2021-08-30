@@ -27,7 +27,7 @@ services:
         docker_host_ip: host.docker.internal
 
   backend:
-    image: the-unfold/notepad-backend:main
+    image: ghcr.io/the-unfold/notepad-backend:main
     build:
       context: backend
       dockerfile: Dockerfile.prod.server
@@ -41,7 +41,7 @@ services:
       - '8000:8000'
 
   frontend:
-    image: the-unfold/notepad-frontend:main
+    image: ghcr.io/the-unfold/notepad-frontend:main
     build:
       context: frontend
       dockerfile: Dockerfile.prod

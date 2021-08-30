@@ -16,8 +16,8 @@ services:
       context: backend
       dockerfile: Dockerfile.prod.server
 
-  frontend:
-    # image: ...
-    build:
-      context: frontend
-      dockerfile: Dockerfile.prod
+  # frontend:
+  #   # image: ...
+  #   build:
+  #     context: frontend
+  #     dockerfile: Dockerfile.prod
