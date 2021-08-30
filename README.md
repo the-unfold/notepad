@@ -121,11 +121,17 @@ npm run precommit
 npm run precommit-fix
 ```
 
-### Build and run production docker images locally
+### Run production docker images locally
 
-Note: the main reason to run this file is to **debug** production docker images locally before building them on Github Actions (which should be rare).
 
-- Build
+- Pull
+
+```sh
+docker-compose -f dc.prod-local.yml pull
+```
+
+- Or build build
+_Note: the main reason to run this file is to **debug** production docker images locally before building them on Github Actions (which should be rare)._
 
 ```sh
 bash prod-local-build-all.sh

@@ -28,8 +28,8 @@ services:
       - TPG_DB=notepad
       - TPG_USER=admin
       - TPG_PASS=admin
-      - TPG_HOST=db
-      - TPG_PORT=5431
+      - TPG_HOST=postgres
+      - TPG_PORT=5432
     ports:
       - '8000:8000'
 
