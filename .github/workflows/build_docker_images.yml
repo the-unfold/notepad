@@ -53,7 +53,7 @@ jobs:
         # docker doesn't have postgresql client by default
         # docker ships with a very limited version of tar, which is incompatible with actions/cache
         # curl and jq are required to prepare docker buildx 
-        run: apk add -no-cache postgresql-client tar jq curl
+        run: apk add --no-cache postgresql-client tar jq curl
 
       - name: Install Docker buildx
         # buildx is requred for docker docker/build-push-action.
