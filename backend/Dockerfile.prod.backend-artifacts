@@ -49,6 +49,6 @@ RUN stack build --copy-bins
 # Generate Elm code
 RUN stack run codegen
 
-# Compress stack dependencies cache 2
+# Compress stack dependencies cache
 WORKDIR /root
 RUN tar -c -Ipigz -f stack_dependencies_cache.tar.gz .stack

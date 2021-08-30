@@ -1,6 +1,6 @@
 # notepad
 
-A fullstack note keeping application built on Haskell and Elm
+Full-stack note keeping app built with Haskell and Elm
 
 <img src="docs/icon.png" alt="notepad" width="300"/>
 

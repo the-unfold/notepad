@@ -80,7 +80,7 @@ jobs:
         # That's why applying migrations is enough.
         run: export PGPASSWORD=admin; psql -h postgres -p 5432 -U admin -d notepad -f postgres/1.init.sql
 
-      - name: Build backend image
+      - name: Build backend-artifacts Docker image
         run: docker build --build-arg docker_host_ip=$(ip route show | awk '/default/ {print $3}') -f backend/Dockerfile.prod.backend-artifacts -t backend-artifacts backend
 
       - name: Save stack depenencies cache
