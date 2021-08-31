@@ -1,6 +1,7 @@
 set -e
 
 curl --request POST \
+  --verbose \
   --url http://localhost:8000/users \
   --header 'Content-Type: application/json' \
   --data '{
@@ -9,6 +10,7 @@ curl --request POST \
     }'
 
 curl --request POST \
+  --verbose
   --url http://localhost:8000/notes/create \
   --header 'Content-Type: application/json' \
   --data '{

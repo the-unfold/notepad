@@ -26,6 +26,10 @@ It's a proof-of-concept project. Its priorities are consistency, type-safety, re
 
 - Everything is deployed in Docker containers
 
+### Tech notes
+
+- Do not hardcode UUIDs. Never ever. Otherwise, you will have hard times debugging your code.
+
 ### User story
 
 - User can authenticate with Okta

@@ -12,6 +12,7 @@ import UI.Palette as Palette
 import UI.RenderConfig exposing (RenderConfig)
 import UI.Text as Text
 import UI.TextField as TextField
+import Url.Builder
 import WithUuid exposing (encodeWithUuid)
 
 
@@ -43,7 +44,7 @@ addNote flags noteCreatePayload =
         { url = flags.backendUrl ++ "/notes/create"
         , body =
             noteCreatePayload
-                |> encodeWithUuid noteCreatePayloadEncoder "550e8400-e29b-41d4-a726-446655440047"
+                |> encodeWithUuid noteCreatePayloadEncoder "550e8400-e29b-41d4-a726-946655440047"
                 |> Http.jsonBody
         , expect = Http.expectWhatever (always GotCreateNoteResult)
         }

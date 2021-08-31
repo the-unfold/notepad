@@ -4,6 +4,7 @@ module HttpServer (handleRequests) where
 
 import Control.Concurrent.STM.TBChan (TBChan)
 import Control.Monad.Trans (MonadIO (liftIO))
+import Control.Monad.Except (runExceptT)
 import Data.Int (Int32)
 import DomainEvent qualified
 import EventRegistrator (insertEvent)
@@ -26,6 +27,7 @@ app chan =
   logStdoutDev
     . cors (const $ Just corsPolicy)
     $ serve notepadApi (server chan)
+    -- catch error and if it is like "somethig wend wrong" then respond with 500 error manually
   where
     -- Note: Content-Type header is necessary for POST requests
     corsPolicy = simpleCorsResourcePolicy {corsRequestHeaders = ["content-type"]}
@@ -50,8 +52,10 @@ server chan =
   where
     registerUser :: WithUuid UserRegisterPayload -> Handler NoContent
     registerUser WithUuid {uuid, payload} = do
-      liftIO $ insertEvent chan uuid (DomainEvent.UserRegistered (email payload))
-      pure NoContent
+      insertionResult <- liftIO $ runExceptT $ insertEvent chan uuid (DomainEvent.UserRegistered (email payload))
+      case insertionResult of
+        Right _ -> pure NoContent
+        Left _ -> throwError err500
 
     getNotes :: Handler [Note]
     getNotes = do
@@ -66,11 +70,15 @@ server chan =
     createNote :: WithUuid NoteCreatePayload -> Handler NoContent
     createNote WithUuid {uuid, payload} = do
       let userId = 1
-      liftIO $ insertEvent chan uuid (DomainEvent.NoteCreated userId (content (payload :: NoteCreatePayload)))
-      pure NoContent
+      insertionResult <- liftIO $ runExceptT $ insertEvent chan uuid (DomainEvent.NoteCreated userId (content (payload :: NoteCreatePayload)))
+      case insertionResult of
+        Right _ -> pure NoContent
+        Left _ -> throwError err500
 
     updateNote :: WithUuid NoteUpdatePayload -> Handler NoContent
     updateNote WithUuid {uuid, payload} = do
       let userId = 1
-      liftIO $ insertEvent chan uuid (DomainEvent.NoteUpdated userId (noteId (payload :: NoteUpdatePayload)) (content (payload :: NoteUpdatePayload)))
-      pure NoContent
+      insertionResult <- liftIO $ runExceptT $ insertEvent chan uuid (DomainEvent.NoteUpdated userId (noteId (payload :: NoteUpdatePayload)) (content (payload :: NoteUpdatePayload)))
+      case insertionResult of
+        Right _ -> pure NoContent
+        Left _ -> throwError err500
