@@ -11,10 +11,11 @@ module EventRegistrator (insertEvent) where
 
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TBChan (TBChan, tryWriteTBChan)
+import Control.Concurrent.STM.TChan (TChan, readTChan)
 import Control.Exception (try)
 import Control.Monad (void)
-import Control.Monad.Except (ExceptT (..), catchError, throwError)
-import Control.Monad.State (StateT, get, modify)
+import Control.Monad.Except (ExceptT (..), MonadIO (liftIO), catchError, runExceptT, throwError, withExcept, withExceptT)
+import Control.Monad.State (StateT (runStateT), get, modify)
 import Control.Monad.Trans (lift)
 import Data.Aeson qualified as Aeson
 import Data.Set (Set, insert)
@@ -24,21 +25,50 @@ import Database (includesText, runQueryWithNewConnection_)
 import Database.PostgreSQL.Typed (PGError)
 import Database.PostgreSQL.Typed.Query (pgSQL)
 import DomainEvent (DomainEvent (UserRegistered, email))
+import Types.WithUuid (WithUuid (WithUuid, payload, uuid))
 
-runExceptionalMonad = runStateT . runExceptT 
+runExceptionalMonad = runStateT . runExceptT
 
-processCommand :: DomainCommand -> ExceptionalShitMonad
-processCommand command = do
+----- here goes note taking aggregate, which is Context A
+newtype ContextAState = ContextAState {registeredUserEmails :: Set Text}
+
+-- ErrorType
+data FuckYou = FuckYou
+
+data DomainCommand
+  = RegisterUser {userEmail :: Text}
+  | BringMeSomeBeer
+
+type ExceptionalShitMonad s = ExceptT FuckYou (StateT s IO)
+
+processCommand :: TChan (WithUuid DomainCommand) -> WithUuid DomainCommand -> ExceptionalShitMonad ContextAState ()
+processCommand chan WithUuid {payload, uuid} = do
   -- eventsA <- runExceptionalMonad $ noteTakingAggregate command
-  eventsA <- noteTakingAggregate command
+  eventsA <- noteTakingAggregate payload
   -- eventsB <- runExceptionalMonad aggregateB command
   -- mapM insertEvent $ eventsA <> eventsB
-  fmap insertEvent eventsA
+  mapM_ (withExceptT (const FuckYou) . (insertEvent' chan)) eventsA
 
-processCommandInLoop :: TChan DomainCommand -> ExeptionShitMonad
+processCommandInLoop :: TChan (WithUuid DomainCommand) -> ExceptionalShitMonad ContextAState ()
 processCommandInLoop chan = do
-  let command = atomically $ readTChan chan
+  command <- liftIO $ atomically $ readTChan chan
+  liftIO $ putStrLn "Processing command..."
+  processCommand command
 
+  processCommandInLoop chan
+
+insertEvent' :: TBChan () -> DomainEvent -> ExceptT PGError IO ()
+insertEvent' chan body = do
+  let errorHandler :: PGError -> ExceptT PGError IO ()
+      errorHandler e
+        | includesText "unique_event_uuid" e = pure ()
+        | otherwise = throwError e
+  (`catchError` errorHandler) . ExceptT . try $ do
+    runQueryWithNewConnection_ [pgSQL| INSERT INTO events (uuid, body) VALUES (${uuid}, ${Aeson.toJSON body}); |]
+    -- No need in notifying the Event Processor in case of constraint violation,
+    -- because the constraint violation means that the event is already registered
+    -- and the Event Processor is already notified
+    void $ atomically $ tryWriteTBChan chan ()
 
 -- After inserting, it notifies event processor via TBChan,
 -- which means "a new event was registered, go and process it."
@@ -55,18 +85,6 @@ insertEvent eventBusNotificationChan uuid body = do
     -- because the constraint violation means that the event is already registered
     -- and the Event Processor is already notified
     void $ atomically $ tryWriteTBChan eventBusNotificationChan ()
-
------ here goes note taking aggregate, which is Context A
-newtype ContextAState = ContextAState {registeredUserEmails :: Set Text}
-
--- ErrorType
-data FuckYou = FuckYou
-
-data DomainCommand
-  = RegisterUser {userEmail :: Text}
-  | BringMeSomeBeer
-
-type ExceptionalShitMonad s = ExceptT FuckYou (StateT s IO)
 
 -- эту хуйню дёргать будет event processor
 fuckContext :: DomainEvent -> ContextAState -> ContextAState
