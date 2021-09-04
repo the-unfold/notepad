@@ -39,11 +39,13 @@ data ProcessingError
 -- Думаю, пока не будем его унифицировать, пусть каждая IO фиксирует ответ отдельно
 processEvent :: DomainEvent -> ExceptT ProcessingError IO ()
 processEvent UserRegistered {email} = do
+  -- command processing
   let transformError :: PGError -> ProcessingError
       transformError e
         | includesText "unique_user_email" e = InvalidOperation "User with such email already exists."
         | otherwise = InternalProcessingError
   withExceptT transformError . ExceptT . try $
+  -- event processing
     runQueryWithNewConnection_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
 processEvent NoteCreated {userId, content} = do
   -- Причины облома: пользователь превысил квоту notes, ...
