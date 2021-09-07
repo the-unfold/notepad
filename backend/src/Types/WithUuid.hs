@@ -17,9 +17,12 @@ import Language.Elm.Type qualified as Type
 import Language.Haskell.To.Elm qualified as E
 import Types.Uuid ()
 
-data WithUuid a = WithUuid {payload :: a, uuid :: UUID.UUID}
+data WithUuid a = WithUuid {uuid :: UUID.UUID, payload :: a}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (A.ToJSON, A.FromJSON, SOP.Generic, SOP.HasDatatypeInfo)
+
+instance Functor WithUuid where
+  fmap f WithUuid {uuid, payload} = WithUuid uuid $ f payload
 
 instance E.HasElmType WithUuid where
   elmDefinition =

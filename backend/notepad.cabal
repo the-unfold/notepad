@@ -112,6 +112,8 @@ executable server
     Types.Either
     Database
     DomainEvent
+    DomainCommand
+    CommandProcessor
     EventProcessor
     EventRegistrator
     HttpServer
