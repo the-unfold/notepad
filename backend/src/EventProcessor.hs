@@ -34,6 +34,22 @@ data ProcessingError
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
 
+type EventHandler = DomainEvent -> ExceptT ProcessingError IO ()
+
+commonEventHandler :: EventHandler
+commonEventHandler (UserRegistered email) = do
+  let transformError :: PGError -> ProcessingError
+      transformError _pgError = InternalProcessingError
+  withExceptT transformError . ExceptT . try $
+    -- event processing
+    runQueryWithNewConnection_ [pgSQL| INSERT INTO users (email) VALUES (${email}); |]
+commonEventHandler _ = pure ()
+
+validationEventHandler :: EventHandler
+validationEventHandler (UserRegistered email) = do
+  pure ()
+validationEventHandler _ = pure ()
+
 -- -- а юнит ли? возвращать результат обработки - не обязательно правильное действие.
 -- -- Но, с другой стороны, мы хотели бы иметь унифицированный интерфейс для регистрации ответов.
 -- -- Думаю, пока не будем его унифицировать, пусть каждая IO фиксирует ответ отдельно

@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module EventRegistrator (insertEvent') where
+module EventRegistrator (insertEvent) where
 
 -- Events are created by aggregates.
 -- Event registrator writes event to eventlog and notifies the event bus
@@ -26,8 +26,8 @@ import Database.PostgreSQL.Typed (PGError)
 import Database.PostgreSQL.Typed.Query (pgSQL)
 import DomainEvent (DomainEvent (UserRegistered, email))
 
-insertEvent' :: DomainEvent -> ExceptT PGError IO ()
-insertEvent' body = do
+insertEvent :: DomainEvent -> ExceptT PGError IO ()
+insertEvent body = do
   let errorHandler :: PGError -> ExceptT PGError IO ()
       errorHandler e
         | includesText "unique_event_uuid" e = pure ()

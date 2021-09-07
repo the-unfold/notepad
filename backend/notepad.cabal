@@ -80,7 +80,7 @@ common deps
     -- TODO: clarify meaning
     -with-rtsopts=-N
     -- Enable all possible warnings as errors
-    -Werror
+    -- -Werror
     -Weverything
     -- Intentionally ignore some warnings
     -Wno-all-missed-specialisations
