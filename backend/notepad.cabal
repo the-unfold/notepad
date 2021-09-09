@@ -114,11 +114,12 @@ executable server
     DomainEvent
     DomainCommand
     CommandProcessor
-    EventProcessor
     EventRegistrator
     HttpServer
     HttpTypes
     Queries
+    Projection
+    ValidationProjection
 
 
 executable codegen

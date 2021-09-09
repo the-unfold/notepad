@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module EventRegistrator (insertEvent) where
+module EventRegistrator (insertEvent, getAllEvents) where
 
 -- Events are created by aggregates.
 -- Event registrator writes event to eventlog and notifies the event bus
@@ -18,13 +18,34 @@ import Control.Monad.Except (ExceptT (..), MonadIO (liftIO), catchError, liftEit
 import Control.Monad.State (StateT (runStateT), get, modify)
 import Control.Monad.Trans (lift)
 import Data.Aeson qualified as Aeson
+import Data.Int (Int32)
 import Data.Set (Set, insert)
 import Data.Text (Text)
 import Data.UUID qualified as UUID
-import Database (includesText, runQueryWithNewConnection_)
+import Database (includesText, runQueryWithNewConnection, runQueryWithNewConnection_)
 import Database.PostgreSQL.Typed (PGError)
 import Database.PostgreSQL.Typed.Query (pgSQL)
 import DomainEvent (DomainEvent (UserRegistered, email))
+
+type DomainEventDto = (Maybe Int32, Maybe Aeson.Value)
+
+data EventLogError = EventDecodeError | EventReadError
+
+getAllEvents :: ExceptT EventLogError IO [DomainEvent]
+getAllEvents = do
+  let errorHandler :: PGError -> EventLogError
+      errorHandler _ = EventReadError
+  events <- withExceptT errorHandler . ExceptT . try . liftIO $ do
+    runQueryWithNewConnection [pgSQL| SELECT event_id, body FROM events ORDER BY event_id ASC; |] :: IO [DomainEventDto]
+
+  liftEither $ traverse decodeEvent events
+
+decodeEvent :: DomainEventDto -> Either EventLogError DomainEvent
+decodeEvent (Just eventId, Just body) =
+  case Aeson.fromJSON body of
+    Aeson.Success evt -> Right evt
+    Aeson.Error _ -> Left EventDecodeError
+decodeEvent _ = Left EventDecodeError
 
 insertEvent :: DomainEvent -> ExceptT PGError IO ()
 insertEvent body = do

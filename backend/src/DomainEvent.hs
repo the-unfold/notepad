@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingVia #-}
 
-module DomainEvent (DomainEvent (..)) where
+module DomainEvent (DomainEvent (..), EventProcessingError (..)) where
 
 import Data.Aeson qualified as Aeson
 import Data.Int (Int32)
@@ -17,3 +17,6 @@ data DomainEvent
   | NoteRemoved {userId :: Int32, noteId :: Int32}
   deriving stock (Eq, Show, Read, Generic)
   deriving anyclass (Aeson.ToJSON, Aeson.FromJSON)
+
+data EventProcessingError = EventProcessingError
+  deriving stock (Show)
