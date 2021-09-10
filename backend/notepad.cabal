@@ -120,6 +120,8 @@ executable server
     Queries
     Projection
     ValidationProjection
+    MasterProjection
+    EventProcessor
 
 
 executable codegen

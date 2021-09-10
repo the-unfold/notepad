@@ -16,8 +16,9 @@ main = do
   commandsChan <- atomically newTChan :: IO (TChan (WithUuid DomainCommand))
   eventsChan <- atomically $ newTBChan 1 :: IO (TBChan ())
 
-  _ <- forkChild childrenMVars $ runCommandProcessing eventsChan commandsChan
+  _threadId <- forkChild childrenMVars $ runCommandProcessing eventsChan commandsChan
   _threadId <- forkChild childrenMVars $ handleRequests commandsChan
+  -- _threadId <- forkChild childrenMVars $ projection???
 
   waitForChildren childrenMVars
   return ()

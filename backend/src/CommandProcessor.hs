@@ -7,7 +7,7 @@
 module CommandProcessor (runCommandProcessing, runExceptStateT) where
 
 import Control.Concurrent.STM (atomically)
-import Control.Concurrent.STM.TBChan (TBChan, writeTBChan)
+import Control.Concurrent.STM.TBChan (TBChan, tryWriteTBChan, writeTBChan)
 import Control.Concurrent.STM.TChan (TChan, readTChan)
 import Control.Monad.Except (ExceptT, mapExceptT, runExceptT, withExceptT)
 import Control.Monad.State (StateT (runStateT))
@@ -108,7 +108,7 @@ processCommand eventsChan command = do
   (mapExceptT liftIO . withExceptT (const InternalError)) $ mapM_ insertEvent events
 
   -- notify that new events are available
-  liftIO $ atomically $ writeTBChan eventsChan ()
+  _written <- liftIO $ atomically $ tryWriteTBChan eventsChan ()
 
   -- apply events to the validation projection
   withExceptT EventError $ mapM_ updateValidationProjection events

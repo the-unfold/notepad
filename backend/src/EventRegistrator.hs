@@ -2,7 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module EventRegistrator (insertEvent, getAllEvents) where
+module EventRegistrator (insertEvent, getAllEvents, getEvents, EventLogError) where
 
 -- Events are created by aggregates.
 -- Event registrator writes event to eventlog and notifies the event bus
@@ -14,9 +14,9 @@ import Control.Concurrent.STM.TBChan (TBChan, tryWriteTBChan)
 import Control.Concurrent.STM.TChan (TChan, readTChan, writeTChan)
 import Control.Exception (try)
 import Control.Monad (void)
-import Control.Monad.Except (ExceptT (..), MonadIO (liftIO), catchError, liftEither, runExceptT, throwError, withExcept, withExceptT)
+import Control.Monad.Except (ExceptT (..), catchError, liftEither, runExceptT, throwError, withExcept, withExceptT)
 import Control.Monad.State (StateT (runStateT), get, modify)
-import Control.Monad.Trans (lift)
+import Control.Monad.Trans (lift, liftIO)
 import Data.Aeson qualified as Aeson
 import Data.Int (Int32)
 import Data.Set (Set, insert)
@@ -30,13 +30,22 @@ import DomainEvent (DomainEvent (UserRegistered, email))
 type DomainEventDto = (Maybe Int32, Maybe Aeson.Value)
 
 data EventLogError = EventDecodeError | EventReadError
+  deriving (Show)
+
+errorHandler :: PGError -> EventLogError
+errorHandler _ = EventReadError
 
 getAllEvents :: ExceptT EventLogError IO [DomainEvent]
 getAllEvents = do
-  let errorHandler :: PGError -> EventLogError
-      errorHandler _ = EventReadError
   events <- withExceptT errorHandler . ExceptT . try . liftIO $ do
     runQueryWithNewConnection [pgSQL| SELECT event_id, body FROM events ORDER BY event_id ASC; |] :: IO [DomainEventDto]
+
+  liftEither $ traverse decodeEvent events
+
+getEvents :: Int32 -> ExceptT EventLogError IO [DomainEvent]
+getEvents eventId = do
+  events <- withExceptT errorHandler . ExceptT . try . liftIO $ do
+    runQueryWithNewConnection [pgSQL| SELECT event_id, body FROM events WHERE event_id > ${eventId} ORDER BY event_id ASC; |] :: IO [DomainEventDto]
 
   liftEither $ traverse decodeEvent events
 
